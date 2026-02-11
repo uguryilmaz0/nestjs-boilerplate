@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  AUTHOR
+  ADMIN
+  PREMIUM
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
+  password String // Şifrelenmiş (hashed) halini tutacağız
+  name     String?
+  role     Role      @default(USER) // Varsayılan rol USER
+  posts    Post[] // Bir kullanıcının birden fazla yazısı olabilir
+  comments Comment[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  slug      String   @unique // URL'de id yerine görünecek kısım
+  image     String? // 🔥 Yeni ekledik: Resmin sunucudaki yolu (opsiyonel)
+  createdAt DateTime @default(now())
+  tags      Tag[]
+
+  author   User?     @relation(fields: [authorId], references: [id])
+  authorId Int?
+  comments Comment[]
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  slug  String @unique // 🔥 Benzersizlik ve arama için (nestjs)
+  name  String @unique // 🔥 Görüntüleme için (NestJS)
+  posts Post[] // many to many (Çokça çok ilişkisi)
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String // Yorumun içeriği
+  createdAt DateTime @default(now()) // Yorumun oluşturulma zamanı
+  updatedAt DateTime @updatedAt // Yorumun güncellenme zamanı
+
+  // 🔗 İLİŞKİLER
+  // Yorumu yapan kullanıcı ile bağlantı
+  author   User @relation(fields: [authorId], references: [id])
+  authorId Int
+
+  // Yorumun yapıldığı yazı ile bağlantı
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+}
