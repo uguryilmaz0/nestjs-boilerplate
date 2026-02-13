@@ -4,51 +4,51 @@ import {
   ArgumentsHost,
   HttpException,
   Logger,
-} from '@nestjs/common'; // NestJS çekirdek dekoratörleri ve arayüzleri
-import { Request, Response } from 'express'; // Alttaki Express kütüphanesinin tipleri
+} from '@nestjs/common'; // NestJS çekirdek dekoratörleri / NestJS core decorators
+import { Request, Response } from 'express'; // Express tipleri / Express types
 
-// Hata mesajı objesinin yapısını tanımlıyoruz
+// Hata mesajı objesi yapısı / Exception response structure
 interface IExceptionResponse {
   statusCode: number;
-  message: string | string[]; // Hata tek bir string veya dizi (ValidationPipe'dan gelenler gibi) olabilir
+  message: string | string[]; // Tek mesaj veya dizi (ValidationPipe) / Single or array (ValidationPipe)
   error: string;
 }
 
-@Catch(HttpException) // Sadece HttpException türündeki hataları yakalamasını söylüyoruz
+@Catch(HttpException) // Sadece HttpException türünü yakala / Catch only HttpException types
 export class HttpExceptionFilter implements ExceptionFilter {
-  // NestJS logger'ını sınıf isimleriyle birlikte tanımlıyoruz
+  // NestJS logger / Built-in NestJS logger
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
-  // host: ArgumentsHost -> İsteğin o anki bağlamına (context) erişmemizi sağlar (Request, Response vb.)
+  // host: Mevcut bağlama erişim sağlar / Provides access to the current execution context
   catch(exception: HttpException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp(); // Bağlamı HTTP protokolüne çeviriyoruz
-    const response = ctx.getResponse<Response>(); // Express Response nesnesini alıyoruz
-    const request = ctx.getRequest<Request>(); // Express Request nesnesini alıyoruz
+    const ctx = host.switchToHttp(); // HTTP bağlamına geç / Switch to HTTP context
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
-    // Hata kodunu (400, 404, 500 vb.) alıyoruz
+    // HTTP durum kodu / HTTP status code
     const status = exception.getStatus();
 
-    // Hatanın detaylı içeriğini alıyoruz
+    // Hatanın detaylı içeriği / Detailed exception content
     const exceptionResponse = exception.getResponse();
 
-    // Hata mesajını dinamik ama tip güvenli şekilde ayrıştırıyoruz
+    // Mesajı tip-güvenli ayıkla / Parse message in a type-safe way
     const message =
       typeof exceptionResponse === 'object'
         ? (exceptionResponse as IExceptionResponse).message
         : exceptionResponse;
 
-    // Hata detaylarını logluyoruz
+    // Hata logla / Log the error
     this.logger.error(
-      `Hata: ${status} | Path: ${request.url} | Mesaj: ${JSON.stringify(message)}`,
+      `Error: ${status} | Path: ${request.url} | Message: ${JSON.stringify(message)}`,
     );
 
-    // Kullanıcıya (React tarafına) dönecek standart JSON şeması
+    // Standart JSON hata yanıtı / Standardized JSON error response
     response.status(status).json({
-      statusCode: status, // HTTP durum kodu
-      timestamp: new Date().toISOString(), // Hatanın oluştuğu an (ISO formatında)
-      path: request.url, // Hangi URL'de hata oluştu?
-      message: message, // Temizlenmiş hata mesajı
-      project: 'NestJS Boilerplate', // Proje tanımlayıcısı
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      message: message,
+      project: 'NestJS Boilerplate',
     });
   }
 }

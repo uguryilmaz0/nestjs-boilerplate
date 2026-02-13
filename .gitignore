@@ -60,10 +60,3 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Prisma - generated client (schema ve migration'lar repoda kalmalı)
 /prisma/generated
-
-# Uploads - kullanıcı dosyaları repoya dahil edilmez
-/uploads/*
-!/uploads/.gitkeep
-
-# Local documentation
-CHANGELOG.md

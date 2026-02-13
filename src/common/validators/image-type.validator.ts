@@ -2,27 +2,25 @@ import { FileValidator } from '@nestjs/common';
 
 export class ImageValidator extends FileValidator {
     constructor() {
-        // Üst sınıfa (FileValidator) boş bir ayar nesnesi gönderiyoruz.
+        // Üst sınıfa boş ayar nesnesi gönder / Pass empty config to parent class
         super({});
     }
 
     /**
-   * 🔍 Doğrulama Mantığı
-   * Regex karmaşasına girmeden, Multer'dan gelen MIME tipini kontrol ediyoruz.
-   */
-
+     * Doğrulama mantığı: MIME tipini kontrol eder
+     * Validation logic: checks MIME type from Multer
+     */
     isValid(file: Express.Multer.File): boolean {
         const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-        // Gelen dosyanın tipi listemizde varsa 'true' döner, yoksa 400 hatası fırlatılır.
+        // İzin verilen tipler listesinde mi? / Is it in the allowed types list?
         return allowedMimeTypes.includes(file.mimetype);
     }
 
     /**
-   * ❌ Hata Mesajı
-   * Doğrulama başarısız olduğunda kullanıcıya dönecek mesaj.
-   */
-
+     * Doğrulama başarısız olduğunda dönen hata mesajı
+     * Error message returned when validation fails
+     */
     buildErrorMessage(): string {
-        return 'Yalnızca resim dosyaları (jpg, jpeg, png, gif) yüklenebilir.';
+        return 'Yalnızca resim dosyaları yüklenebilir. / Only image files (jpg, jpeg, png, gif) are allowed.';
     }
 }

@@ -1,459 +1,267 @@
-<p align="center">
-  <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="NestJS Logo" />
-</p>
+# NestJS Boilerplate
 
-<h1 align="center">NestJS Boilerplate</h1>
+![NestJS](https://img.shields.io/badge/NestJS-11.1-ea2845?logo=nestjs)
+![Prisma](https://img.shields.io/badge/Prisma-7.3-2D3748?logo=prisma)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?logo=swagger&logoColor=black)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-<p align="center">
-  <strong>Production-ready backend infrastructure built with NestJS, Prisma & PostgreSQL</strong>
-</p>
+Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, S3 file uploads, soft delete, full-text search, and Swagger documentation.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/NestJS-11.x-E0234E?style=for-the-badge&logo=nestjs" alt="NestJS" />
-  <img src="https://img.shields.io/badge/Prisma-7.x-2D3748?style=for-the-badge&logo=prisma" alt="Prisma" />
-  <img src="https://img.shields.io/badge/PostgreSQL-17-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" />
-</p>
+> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, S3 dosya yükleme, soft delete, tam metin arama ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
 
 ---
 
-## 📋 Table of Contents
+## Features / Özellikler
 
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [Project Structure](#-project-structure)
-- [API Endpoints](#-api-endpoints)
-- [Authentication & Authorization](#-authentication--authorization)
-- [Database Schema](#-database-schema)
-- [Environment Variables](#-environment-variables)
-- [Scripts](#-scripts)
-- [License](#-license)
-
----
-
-## 🎯 Overview
-
-**NestJS Boilerplate** is an enterprise-grade backend boilerplate designed with clean architecture principles. It serves as the core infrastructure for the **ExpiTrack** project and can be used as a foundation for any scalable REST API.
-
-Key design decisions:
-- **Modular architecture** — each domain (Auth, Blog, Comment) is a self-contained module
-- **Database-first approach** — Prisma ORM with migration history for safe schema evolution
-- **Security by default** — JWT authentication, RBAC, input validation, and exception filtering out of the box
+| Feature | Description |
+|---------|-------------|
+| **JWT Authentication** | Signup, signin, token-based access (`passport-jwt`) |
+| **Role-Based Access (RBAC)** | 4 roles: `USER`, `AUTHOR`, `ADMIN`, `PREMIUM` |
+| **Blog CRUD** | Create, read, update, soft delete posts with tag system |
+| **Comments** | Authenticated comment creation with cascade delete |
+| **S3 File Upload** | AWS S3 / MinIO / Supabase compatible image upload |
+| **Soft Delete** | `deletedAt` field on User, Post, Comment models |
+| **Full-Text Search** | PostgreSQL `tsvector` with `@@index` on title & content |
+| **Swagger / OpenAPI** | Interactive API docs at `/api/docs` |
+| **Docker Compose** | PostgreSQL 16 + MinIO for local development |
+| **Pagination** | Offset-based pagination with metadata |
+| **Validation** | `class-validator` + `class-transformer` with auto-whitelist |
+| **Error Handling** | Global `HttpExceptionFilter` with structured JSON responses |
+| **SEO Slugs** | Auto-generated URL-friendly slugs via `slugify` |
 
 ---
 
-## 🏗 Architecture
+## Tech Stack
 
 ```
-Client Request
-     │
-     ▼
-┌─────────────────────────────────────────────────────────┐
-│  Global Middleware Layer                                 │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
-│  │ CORS Policy  │  │ Validation   │  │ Serialization  │  │
-│  │              │  │ Pipe         │  │ Interceptor    │  │
-│  └─────────────┘  └──────────────┘  └────────────────┘  │
-└────────────────────────┬────────────────────────────────┘
-                         │
-     ┌───────────────────┼───────────────────┐
-     ▼                   ▼                   ▼
-┌──────────┐      ┌──────────┐       ┌──────────────┐
-│  Auth    │      │  Blog    │       │  Comment     │
-│  Module  │      │  Module  │       │  Module      │
-│──────────│      │──────────│       │──────────────│
-│ Guard    │◄────►│ Controller│      │ Controller   │
-│ Strategy │      │ Service  │      │ Service      │
-│ Decorator│      │ DTOs     │      │ DTOs         │
-└────┬─────┘      └────┬─────┘       └──────┬───────┘
-     │                 │                    │
-     └─────────────────┼────────────────────┘
-                       ▼
-              ┌─────────────────┐
-              │  Prisma Service  │
-              │  (Database ORM)  │
-              └────────┬────────┘
-                       ▼
-              ┌─────────────────┐
-              │   PostgreSQL    │
-              └─────────────────┘
+NestJS 11.1  ·  TypeScript 5.7  ·  Prisma 7.3  ·  PostgreSQL 16
+Passport JWT  ·  AWS S3 SDK  ·  Swagger  ·  Docker Compose
 ```
 
 ---
 
-## ✨ Features
-
-### 🔐 Authentication & RBAC
-| Feature | Description |
-|---------|-------------|
-| JWT Authentication | Stateless token-based auth with configurable expiration |
-| Role-Based Access Control | 4-tier role system: `ADMIN`, `AUTHOR`, `PREMIUM`, `USER` |
-| Password Hashing | bcrypt with salt rounds for secure storage |
-| Custom Decorators | `@GetUser()` for request user extraction, `@Roles()` for route protection |
-| Serialization | Automatic password exclusion from API responses via `class-transformer` |
-
-### 📝 Blog Engine
-| Feature | Description |
-|---------|-------------|
-| CRUD Operations | Full create, read, update, delete with ownership validation |
-| Pagination | Configurable `page` & `limit` with total count metadata |
-| Search | Case-insensitive full-text search across title and content |
-| Tag Filtering | Many-to-many tag system with slug-based filtering |
-| SEO Slugs | Auto-generated URL-friendly slugs via `slugify` with collision avoidance |
-| Image Upload | Multer-based file upload with type/size validation (max 2MB) |
-
-### 💬 Comment System
-| Feature | Description |
-|---------|-------------|
-| Authenticated Comments | JWT-protected comment creation |
-| Cascade Delete | Comments auto-deleted when parent post is removed |
-| Author Association | Each comment linked to authenticated user |
-
-### 🛡 Security & Quality
-| Feature | Description |
-|---------|-------------|
-| Global Validation | `ValidationPipe` with whitelist & forbidNonWhitelisted |
-| Exception Filter | Standardized error response format with logging |
-| CORS Configuration | Pre-configured for common frontend ports |
-| Static File Serving | Secure serving of uploaded assets |
-| Swagger Documentation | Interactive API docs at `/api/docs` |
-
----
-
-## 🧰 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Runtime** | Node.js |
-| **Framework** | NestJS 11 |
-| **Language** | TypeScript 5.7 |
-| **ORM** | Prisma 7 with PostgreSQL adapter (`@prisma/adapter-pg`) |
-| **Database** | PostgreSQL |
-| **Auth** | Passport.js + JWT (`@nestjs/passport`, `@nestjs/jwt`) |
-| **Validation** | class-validator + class-transformer |
-| **Documentation** | Swagger / OpenAPI (`@nestjs/swagger`) |
-| **File Upload** | Multer (`@nestjs/platform-express`) |
-| **SEO** | slugify |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Node.js** >= 18.x
-- **npm** >= 9.x
-- **PostgreSQL** >= 15.x (running instance)
-
-### Installation
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/<your-username>/nestjs-boilerplate.git
-cd nestjs-boilerplate
-
-# 2. Install dependencies
-npm install
-
-# 3. Configure environment variables
-cp .env.example .env
-# Edit .env with your PostgreSQL connection string and JWT secret
-
-# 4. Run database migrations
-npx prisma migrate dev --name init
-
-# 5. Start the development server
-npm run start:dev
-```
-
-### Verify Installation
-
-- **API Base URL:** [http://localhost:3000/api](http://localhost:3000/api)
-- **Swagger Docs:** [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
-
----
-
-## 📁 Project Structure
+## Project Structure / Proje Yapısı
 
 ```
 src/
-├── main.ts                          # Application bootstrap & global setup
-├── app.module.ts                    # Root module
-├── app.service.ts                   # Root service
-│
-├── auth/                            # 🔐 Authentication Module
-│   ├── auth.module.ts               # Module definition with JWT config
-│   ├── auth.controller.ts           # Signup, Signin, GetMe endpoints
-│   ├── auth.service.ts              # Auth business logic & token generation
-│   ├── decorator/
-│   │   ├── get-user.decorator.ts    # @GetUser() param decorator
-│   │   └── roles-decorator.ts       # @Roles() metadata decorator
-│   ├── dto/
-│   │   ├── auth.dto.ts              # Signup validation schema
-│   │   └── login.dto.ts             # Signin validation schema
-│   ├── entity/
-│   │   └── user.entity.ts           # User serialization (password exclusion)
-│   ├── guard/
-│   │   ├── jwt.guard.ts             # JWT authentication guard
-│   │   └── roles.guard.ts           # RBAC authorization guard
-│   └── strategy/
-│       └── jwt.strategy.ts          # Passport JWT strategy
-│
-├── blog/                            # 📝 Blog Module
-│   ├── blog.module.ts               # Module definition
-│   ├── blog.controller.ts           # CRUD + Search + Upload endpoints
-│   ├── blog.service.ts              # Blog business logic
-│   └── dto/
-│       ├── create-posts.dto.ts      # Post creation schema
-│       ├── update-post.dto.ts       # Partial update schema (PartialType)
-│       └── get-posts-query.dto.ts   # Pagination & filter query schema
-│
-├── comment/                         # 💬 Comment Module
-│   ├── comment.module.ts            # Module definition
-│   ├── comment.controller.ts        # Comment creation endpoint
-│   ├── comment.service.ts           # Comment business logic
-│   └── dto/
-│       └── create-comment.dto.ts    # Comment validation schema
-│
-├── common/                          # 🧩 Shared Utilities
-│   ├── filters/
-│   │   └── http-exception.filter.ts # Global exception filter
-│   └── validators/
-│       └── image-type.validator.ts  # Custom file type validator
-│
-└── prisma/                          # 🗄 Database Layer
-    ├── prisma.module.ts             # Global Prisma module
-    └── prisma.service.ts            # Prisma client with pg adapter
-
+├── auth/                    # Authentication module / Kimlik doğrulama
+│   ├── decorator/           # @GetUser(), @Roles() decorators
+│   ├── dto/                 # AuthDto, LoginDto
+│   ├── entity/              # UserEntity (serialization)
+│   ├── guard/               # JwtGuard, RolesGuard
+│   └── strategy/            # JWT strategy (passport)
+├── blog/                    # Blog module / Blog modülü
+│   └── dto/                 # CreatePostsDto, UpdatePostsDto, GetPostsQueryDto
+├── comment/                 # Comment module / Yorum modülü
+│   └── dto/                 # CreateCommentDto
+├── common/
+│   ├── filters/             # HttpExceptionFilter
+│   ├── services/            # S3Service
+│   └── validators/          # ImageValidator
+├── prisma/                  # PrismaService (pg adapter)
+├── app.module.ts            # Root module
+└── main.ts                  # Bootstrap & global config
 prisma/
-├── schema.prisma                    # Database schema definition
-└── migrations/                      # Migration history
+└── schema.prisma            # Database schema & migrations
+docker-compose.yml           # PostgreSQL + MinIO
 ```
 
 ---
 
-## 📡 API Endpoints
+## Quick Start / Hızlı Başlangıç
 
-### Auth (`/api/auth`)
+### Prerequisites / Gereksinimler
+
+- Node.js 18+
+- PostgreSQL 16+ (or Docker)
+- npm or yarn
+
+### 1. Clone & Install / Klonla ve Kur
+
+```bash
+git clone https://github.com/uguryilmaz0/nestjs-boilerplate.git
+cd nestjs-boilerplate
+npm install
+```
+
+### 2. Environment Variables / Ortam Değişkenleri
+
+```bash
+cp .env.example .env
+# Edit .env with your database credentials and JWT secret
+# .env dosyasını kendi veritabanı bilgilerinizle düzenleyin
+```
+
+### 3. Database Setup / Veritabanı Kurulumu
+
+**Option A: Docker (Recommended / Önerilen)**
+```bash
+docker-compose up -d
+```
+
+**Option B: Local PostgreSQL**
+```bash
+# Update DATABASE_URL in .env with your local connection string
+```
+
+Then run migrations / Ardından migration'ları çalıştırın:
+```bash
+npx prisma migrate dev
+```
+
+### 4. Run / Çalıştır
+
+```bash
+# Development
+npm run start:dev
+
+# Production
+npm run build
+npm run start:prod
+```
+
+API will be available at `http://localhost:3000/api`
+
+---
+
+## API Documentation / API Dokümantasyonu
+
+Interactive Swagger UI is available at:
+
+```
+http://localhost:3000/api/docs
+```
+
+### Endpoints Overview
+
+#### Auth (`/api/auth`)
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/auth/signup` | ❌ | Register a new user |
-| `POST` | `/auth/signin` | ❌ | Login and receive JWT token |
-| `GET` | `/auth/me` | 🔒 JWT | Get current user profile |
+| `POST` | `/auth/signup` | - | Register / Kayıt ol |
+| `POST` | `/auth/signin` | - | Login / Giriş yap |
+| `GET` | `/auth/me` | JWT | Get profile / Profil getir |
 
-### Blog (`/api/blog`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| `GET` | `/blog` | ❌ | List posts (paginated, filterable) |
-| `GET` | `/blog/search?q=` | ❌ | Search posts |
-| `GET` | `/blog/:id` | ❌ | Get single post with comments |
-| `POST` | `/blog/create` | 🔒 JWT | Create a new post |
-| `PATCH` | `/blog/:id` | 🔒 JWT | Update own post |
-| `DELETE` | `/blog/:id` | 🔒 JWT + Role | Delete post (Admin/Author only) |
-| `POST` | `/blog/upload` | 🔒 JWT | Upload image (max 2MB) |
-
-### Comment (`/api/comment`)
+#### Blog (`/api/blog`)
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| `POST` | `/comment` | 🔒 JWT | Add comment to a post |
+| `GET` | `/blog` | - | List posts (paginated) / Yazıları listele |
+| `GET` | `/blog/search?q=term` | - | Full-text search / Tam metin arama |
+| `GET` | `/blog/:id` | - | Get post with comments / Yazı detayı |
+| `POST` | `/blog/create` | JWT | Create post / Yazı oluştur |
+| `PATCH` | `/blog/:id` | JWT | Update post / Yazı güncelle |
+| `DELETE` | `/blog/:id` | JWT + Role | Soft delete post / Yazı sil |
+| `POST` | `/blog/upload` | JWT | Upload image to S3 / Resim yükle |
 
-### Query Parameters (Blog Listing)
+#### Comments (`/api/comment`)
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | `number` | `1` | Page number |
-| `limit` | `number` | `10` | Items per page |
-| `search` | `string` | — | Search in title & content |
-| `tag` | `string` | — | Filter by tag slug |
-
-**Example:** `GET /api/blog?page=2&limit=5&tag=nestjs&search=prisma`
-
----
-
-## 🔐 Authentication & Authorization
-
-### JWT Flow
-
-```
-1. POST /api/auth/signup  →  Register (returns UserEntity)
-2. POST /api/auth/signin  →  Login (returns { access_token, user })
-3. Use token in headers   →  Authorization: Bearer <token>
-4. Protected routes        →  @UseGuards(JwtGuard) validates token
-5. Role-based routes       →  @Roles(Role.ADMIN) + RolesGuard checks role
-```
-
-### Role Hierarchy
-
-| Role | Capabilities |
-|------|-------------|
-| `USER` | Read posts, create comments |
-| `AUTHOR` | All USER + create/edit/delete own posts |
-| `PREMIUM` | Extended access (reserved for future features) |
-| `ADMIN` | Full system access, delete any post |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/comment` | JWT | Add comment / Yorum ekle |
 
 ---
 
-## 🗄 Database Schema
-
-```prisma
-enum Role { USER, AUTHOR, ADMIN, PREMIUM }
-
-model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  password String
-  name     String?
-  role     Role      @default(USER)
-  posts    Post[]
-  comments Comment[]
-}
-
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  slug      String   @unique
-  image     String?
-  createdAt DateTime @default(now())
-  tags      Tag[]
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
-  comments  Comment[]
-}
-
-model Tag {
-  id    Int    @id @default(autoincrement())
-  slug  String @unique
-  name  String @unique
-  posts Post[]
-}
-
-model Comment {
-  id        Int      @id @default(autoincrement())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    Int
-}
-```
-
-### Entity Relationships
+## Database Schema / Veritabanı Şeması
 
 ```
-User  1──N  Post       (Author can have many posts)
-User  1──N  Comment    (User can have many comments)
-Post  1──N  Comment    (Post can have many comments, cascade delete)
-Post  N──M  Tag        (Many-to-many via implicit join table)
+┌──────────┐       ┌──────────┐       ┌──────────┐
+│   User   │1────N│   Post   │N────M│   Tag    │
+│──────────│       │──────────│       │──────────│
+│ id       │       │ id       │       │ id       │
+│ email    │       │ title    │       │ slug     │
+│ password │       │ content  │       │ name     │
+│ name     │       │ slug     │       └──────────┘
+│ role     │       │ image    │
+│ deletedAt│       │ published│
+└──────────┘       │ deletedAt│
+      │1           └──────────┘
+      │                  │1
+      │N                 │N
+┌──────────┐       ┌──────────┐
+│ Comment  │───────│          │
+│──────────│       │          │
+│ id       │       │          │
+│ content  │       │          │
+│ deletedAt│       │          │
+└──────────┘       └──────────┘
+```
+
+**Roles:** `USER` · `AUTHOR` · `ADMIN` · `PREMIUM`
+
+---
+
+## S3 / MinIO Storage
+
+The project supports S3-compatible object storage for file uploads:
+
+| Provider | Configuration |
+|----------|--------------|
+| **AWS S3** | Set `AWS_S3_REGION`, `AWS_S3_BUCKET_NAME`, credentials |
+| **MinIO** | Set `AWS_S3_ENDPOINT=http://localhost:9000` |
+| **Supabase** | Set `AWS_S3_ENDPOINT` to your Supabase storage URL |
+
+MinIO console is available at `http://localhost:9001` when using Docker Compose.
+
+---
+
+## Docker Compose Services
+
+| Service | Port | Description |
+|---------|------|-------------|
+| PostgreSQL 16 | `5432` | Database / Veritabanı |
+| MinIO | `9000` / `9001` | S3-compatible storage / S3 uyumlu depolama |
+
+```bash
+docker-compose up -d    # Start / Başlat
+docker-compose down     # Stop / Durdur
 ```
 
 ---
 
-## ⚙ Environment Variables
+## Scripts / Komutlar
 
-Create a `.env` file in the project root:
-
-```env
-# Database
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
-
-# JWT
-JWT_SECRET="your-super-secret-jwt-key-change-in-production"
-
-# Server
-PORT=3000
-```
-
-> ⚠️ **Never commit `.env` to version control.** Use `.env.example` as a template.
+| Command | Description |
+|---------|-------------|
+| `npm run start:dev` | Development mode with watch / Geliştirme modu |
+| `npm run build` | Compile TypeScript / Derleme |
+| `npm run start:prod` | Production mode / Üretim modu |
+| `npm run lint` | ESLint fix / Kod analizi |
+| `npm run format` | Prettier format / Kod biçimlendirme |
+| `npm run release` | Bump version (standard-version) / Sürüm yükselt |
+| `npx prisma studio` | Database GUI / Veritabanı arayüzü |
+| `npx prisma migrate dev` | Run migrations / Migration çalıştır |
 
 ---
 
-## 📜 Scripts
+## Security Notes / Güvenlik Notları
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| **Dev** | `npm run start:dev` | Start with hot-reload (watch mode) |
-| **Build** | `npm run build` | Compile TypeScript to `dist/` |
-| **Production** | `npm run start:prod` | Run compiled application |
-| **Debug** | `npm run start:debug` | Start with debugger attached |
-| **Lint** | `npm run lint` | Run ESLint with auto-fix |
-| **Format** | `npm run format` | Run Prettier on source files |
-| **Migrate** | `npx prisma migrate dev` | Apply pending database migrations |
-| **Studio** | `npx prisma studio` | Open Prisma visual database browser |
-| **Generate** | `npx prisma generate` | Regenerate Prisma Client |
+- Passwords are hashed with `bcrypt` (10 salt rounds)
+- JWT tokens expire after 1 hour
+- `@Exclude()` decorator hides password from all API responses
+- CORS is configured for specific origins
+- `ValidationPipe` with `whitelist: true` strips unknown properties
+- Soft delete preserves data integrity — records are never physically deleted
 
 ---
 
-## 🧪 API Response Formats
+## Contributing / Katkıda Bulunma
 
-### Success Response (Post Listing)
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "title": "Getting Started with NestJS",
-      "slug": "getting-started-with-nestjs-a1b2c",
-      "published": true,
-      "createdAt": "2026-02-11T18:00:00.000Z",
-      "tags": [{ "id": 1, "name": "NestJS", "slug": "nestjs" }],
-      "author": { "id": 1, "name": "John Doe" }
-    }
-  ],
-  "meta": {
-    "totalItems": 42,
-    "page": 1,
-    "limit": 10,
-    "totalPages": 5
-  }
-}
-```
-
-### Error Response
-```json
-{
-  "statusCode": 403,
-  "timestamp": "2026-02-11T18:30:00.000Z",
-  "path": "/api/blog/5",
-  "message": "Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı.",
-  "project": "NestJS Boilerplate"
-}
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-## 🛡 Security Checklist
+## License / Lisans
 
-- [x] Passwords hashed with bcrypt (10 salt rounds)
-- [x] JWT tokens with 1-hour expiration
-- [x] Input validation on all endpoints (whitelist mode)
-- [x] File upload restricted to images only (jpg, png, gif) with 2MB limit
-- [x] CORS configured for specific origins
-- [x] Sensitive fields excluded from responses (`@Exclude()`)
-- [x] Role-based route protection
-- [x] Global exception filter with structured error logging
-- [ ] Rate limiting (recommended for production)
-- [ ] Helmet.js headers (recommended for production)
-- [ ] HTTPS enforcement (required for production)
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## 📄 License
-
-This project is [MIT licensed](LICENSE).
-
----
-
-<p align="center">
-  Built with ❤️ using <a href="https://nestjs.com">NestJS</a>
-</p>
+**Made with NestJS** · [Report Bug](https://github.com/uguryilmaz0/nestjs-boilerplate/issues) · [Request Feature](https://github.com/uguryilmaz0/nestjs-boilerplate/issues)

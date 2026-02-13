@@ -5,8 +5,9 @@ export class UserEntity implements User {
   id: number;
   email: string;
   name: string | null;
+  deletedAt: Date | null;
 
-  @Exclude() // 🔥 İşte sihir burada! Bu alan JSON'a dönüştürülürken silinecek.
+  @Exclude() // Bu alan JSON yanıtından otomatik gizlenir / Auto-hidden from JSON responses
   password: string;
 
   role: $Enums.Role;

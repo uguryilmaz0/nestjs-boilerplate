@@ -12,9 +12,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 export class CommentController {
     constructor(private commentService: CommentService) { }
 
-    @ApiOperation({ summary: 'Yazıya yorum ekle' })
-    @ApiResponse({ status: 201, description: 'Yorum başarıyla oluşturuldu' })
-    @ApiResponse({ status: 401, description: 'Yetkisiz — JWT token gerekli' })
+    @ApiOperation({ summary: 'Yazıya yorum ekle / Add a comment to a post' })
+    @ApiResponse({ status: 201, description: 'Yorum oluşturuldu / Comment created' })
+    @ApiResponse({ status: 401, description: 'Yetkisiz — JWT token gerekli / Unauthorized — JWT required' })
     @Post()
     async createComment(@GetUser('id') userId: number, @Body() dto: CreateCommentDto) {
         return await this.commentService.createComment(userId, dto);

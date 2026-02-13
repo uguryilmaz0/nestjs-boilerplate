@@ -2,30 +2,27 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostsDto } from './dto/create-posts.dto';
 import { UpdatePostsDto } from './dto/update-post.dto';
-import { join } from 'path';
-import * as fs from 'fs'; // Fiziksel dosya işlemleri için
-import { promisify } from 'util';
 import { GetPostsQueryDto } from './dto/get-posts-query.dto';
 import slugify from 'slugify';
-
-const unlinkAsync = promisify(fs.unlink); // Silme işlemini asenkron yapmak için
+import { S3Service } from 'src/common/services/s3.service';
 
 @Injectable()
 export class BlogService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private s3Service: S3Service) { }
 
+  // Tüm yazıları sayfalama ve opsiyonel filtreleme ile getir
   // Get all posts with pagination and optional tag filtering
   async getPosts(query: GetPostsQueryDto) {
     const { page = 1, limit = 10, tag, search } = query;
     const skip = (page - 1) * limit;
 
-    // 🛡️ Dinamik 'where' objesi oluşturma
+    // Dinamik 'where' objesi oluşturma / Build dynamic 'where' object
     const where: any = {
-      published: true, // Sadece yayınlanmış yazıları getir
-      deletedAt: null, // Sadece silinmemiş yazıları getir
+      published: true, // Sadece yayınlanmış yazıları getir / Only published posts
+      deletedAt: null, // Soft delete filtresi / Soft delete filter
     }
 
-    // Eğer tag varsa ekle
+    // Etiket filtresi / Tag filter
     if (tag) {
       where.tags = {
         some: {
@@ -34,30 +31,27 @@ export class BlogService {
       }
     }
 
-    // Optimize edilmiş arama: PostgreSQL 'tsvector' kullanarak title ve content içinde arama yapıyoruz
+    // PostgreSQL tsvector ile tam metin araması / Full-text search using PostgreSQL tsvector
     if (search) {
       where.OR = [
-        { title: { search: search.split(' ').join(' & ') } }, // PostgreSQL 'tsvector' kullanımı için
-        { content: { search: search.split(' ').join(' & ') } }, // PostgreSQL 'tsvector' kullanımı için
-        // Not: Eğer Prisma'da previewFeatures = ["fullTextSearchPostgres"] kapalıysa 
-        // mevcut 'contains' yapısı kalsın ama title ve content alanlarında index olduğundan emin ol. Bu bilgi schema.prisma dosyasında belirtilmelidir.
+        { title: { search: search.split(' ').join(' & ') } },
+        { content: { search: search.split(' ').join(' & ') } },
       ]
     }
 
-    // Veriyi ve toplam sayıyı paralel olarak çekiyoruz (Performans için)
+    // Veri ve toplam sayıyı paralel çek (performans) / Fetch data & count in parallel
     const [posts, totalCount] = await Promise.all([
       this.prisma.post.findMany({
         where,
         skip,
         take: limit,
         include: {
-          tags: true, // Etiketleri de Json içinde getir
-          author: { select: { id: true, name: true } }, // Yazar bilgileri
+          tags: true, // Etiketleri dahil et / Include tags
+          author: { select: { id: true, name: true } }, // Yazar bilgileri / Author info
         },
-        orderBy: { createdAt: 'desc' }, // En yeni yazılar önce gelsin
-
+        orderBy: { createdAt: 'desc' }, // En yeni önce / Newest first
       }),
-      this.prisma.post.count({ where }) // Toplam sayıyı filtreye göre alıyoruz
+      this.prisma.post.count({ where }) // Filtreye göre toplam / Total by filter
     ])
 
     return {
@@ -71,83 +65,83 @@ export class BlogService {
     }
   }
 
-  // Get a single post by ID
+  // ID ile tek bir yazıyı getir / Get a single post by ID
   async getPostById(postId: number) {
     const post = await this.prisma.post.findUnique({
-      where: { id: postId, deletedAt: null }, // Silinmemiş yazıları getir
+      where: { id: postId, deletedAt: null }, // Soft delete filtresi / Soft delete filter
       include: {
-        tags: true, // Etiketleri de Json içinden getir
-        author: { // Yazar bilgileri
+        tags: true, // Etiketleri dahil et / Include tags
+        author: { // Yazar bilgileri / Author info
           select: {
             id: true,
             name: true,
-            email: true, // Güvenlik için şifreyi getirme
+            email: true, // Şifre hariç / Excludes password
           }
         },
         comments: {
-          where: { deletedAt: null }, // Eğer yorumlarda da soft delete varsa
+          where: { deletedAt: null }, // Silinmiş yorumları hariç tut / Exclude soft-deleted comments
           include: {
             author: {
               select: {
                 id: true,
-                name: true, // Yorum yapanın ismi
+                name: true, // Yorum sahibi / Commenter name
               }
             }
           },
           orderBy: {
-            createdAt: 'desc', // En yeni yorumlar önce gelsin
+            createdAt: 'desc', // En yeni yorumlar önce / Newest comments first
           }
         }
       }
     })
 
-    if (!post) throw new ForbiddenException('Yazı bulunamadı.');
+    if (!post) throw new ForbiddenException('Yazı bulunamadı. / Post not found.');
     return post;
   }
 
-  // Create a new post (Post)
+  // Yeni yazı oluştur / Create a new post
   async createPost(userId: number, dto: CreatePostsDto) {
-    // Başlığı temizle ve URL dostu yap
-    const baseSlug = slugify(dto.title, { lower: true, strict: true, locale: 'tr' }); // "Merhaba Dünya!" -> "merhaba-dunya"
+    // Başlıktan SEO-uyumlu slug oluştur / Generate SEO-friendly slug from title
+    const baseSlug = slugify(dto.title, { lower: true, strict: true, locale: 'tr' });
 
     return this.prisma.post.create({
       data: {
         title: dto.title,
         content: dto.content,
-        image: dto.image, // 🔥 Yeni ekledik: Resim yolu
+        image: dto.image, // S3 resim URL'si / S3 image URL
         published: dto.published || false,
-        authorId: userId, // 🔥 JWT'den gelen User ile bağlantı
-        // Çakışma ihtimaline karşı sonuna kısa bir random string veya tarih ekliyoruz
+        authorId: userId, // JWT'den gelen kullanıcı / User from JWT
+        // Çakışma önleme: rastgele son ek / Collision prevention: random suffix
         slug: `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`,
         tags: {
-          // Gelen her string tag'i nesneye çeviriyoruz
+          // Etiketleri bul veya oluştur / Find or create tags
           connectOrCreate: (dto.tags || []).map((tag) => {
-            const normalizedTag = tag.trim().toLowerCase(); // " TypeScript " -> "typescript"
+            const normalizedTag = tag.trim().toLowerCase();
             return {
-              where: { slug: normalizedTag },// 🔥 Uniqueness kontrolü slug üzerinden
-              create: { slug: normalizedTag, name: tag.trim() },// 🔥 İlk kim yazdıysa o isim kalır (NestJS)
+              where: { slug: normalizedTag }, // Slug ile benzersizlik / Uniqueness by slug
+              create: { slug: normalizedTag, name: tag.trim() },
             }
           })
         }
       },
       include: {
-        tags: true, // Oluşturulan yazının etiketlerini de Json içinde getir
+        tags: true, // Etiketleri dahil et / Include tags
       }
     })
   }
 
-  // Update a post (Patch)
+  // Yazıyı güncelle (kısmi) / Update a post (partial)
   async updatePost(userId: number, postId: number, dto: UpdatePostsDto) {
-    // 1. Önce yazı var mı ve bu kullanıcıya mı ait kontrolü yapabiliriz
+    // 1. Yazı varlığı ve sahiplik kontrolü / Check post existence & ownership
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
     })
 
     if (!post || post.authorId !== userId) {
-      throw new ForbiddenException('Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı.');
+      throw new ForbiddenException('Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı. / Not authorized or post not found.');
     }
 
-    // 2. Eğer yazı varsa güncelleme işlemini yapabiliriz
+    // 2. Güncelleme işlemi / Perform update
     return await this.prisma.post.update({
       where: { id: postId },
       data: {
@@ -155,69 +149,50 @@ export class BlogService {
         content: dto.content,
         published: dto.published,
         tags: dto.tags ? {
-          set: [], // Önce tüm mevcut etiketleri kaldır
+          set: [], // Mevcut etiketleri kaldır / Remove current tags
           connectOrCreate: dto.tags.map((tag) => {
-            const normalizedTag = tag.trim().toLowerCase(); // " TypeScript " -> "typescript"
+            const normalizedTag = tag.trim().toLowerCase();
             return {
-              where: { slug: normalizedTag },// 🔥 Uniqueness kontrolü slug üzerinde
-              create: { slug: normalizedTag, name: tag.trim() },// 🔥 İlk kim yazdıysa o isim kalır (NestJS)
+              where: { slug: normalizedTag },
+              create: { slug: normalizedTag, name: tag.trim() },
             }
           })
         } : undefined,
       },
       include: {
-        tags: true, // Güncellenen yazının etiketlerini de Json içinde getir
+        tags: true, // Etiketleri dahil et / Include tags
       }
     })
   }
 
-  // Delete physical image file
-  private async deleteImageFile(filePath: string) {
-    try {
-      // Veritabanında kayıtlı yol: /uploads/resim.jpg
-      // Fiziksel yol: C:/.../proje/uploads/resim.jpg
-      const fullPath = join(process.cwd(), filePath);
-      if (fs.existsSync(fullPath)) {
-        await unlinkAsync(fullPath);
-        console.log(`✅ Dosya başarıyla silindi: ${fullPath}`);
-      }
-    } catch (error) {
-      console.error(`❌ Dosya silinirken hata oluştu: ${error.message}`);
-      // Dosya silinemese bile veritabanı işlemi durmasın diye hata fırlatmıyoruz
-    }
-  }
-
-  // Delete a post (Delete)
+  // Yazıyı sil (soft delete) / Delete a post (soft delete)
   async deletePost(userId: number, postId: number) {
-    // 1. Yazıyı bul ve yetki kontrolü yap
+    // 1. Yazıyı bul ve yetki kontrolü / Find post & check ownership
     const post = await this.prisma.post.findUnique({
       where: { id: postId, deletedAt: null },
     })
 
     if (!post || post.authorId !== userId) {
-      throw new ForbiddenException('Bu yazıyı silme yetkiniz yok veya yazı bulunamadı.');
+      throw new ForbiddenException('Bu yazıyı silme yetkiniz yok veya yazı bulunamadı. / Not authorized or post not found.');
     }
 
-    // 2. Soft delete yaparak yazıyı silelim (deletedAt alanını doldurarak)
+    // 2. Soft delete: deletedAt alanını doldur / Populate deletedAt field
     await this.prisma.post.update({
       where: { id: postId },
-      data: { deletedAt: new Date() }, // Silindiği zamanı kaydet
+      data: { deletedAt: new Date() },
     })
 
+    // 3. S3'teki resmi sil / Delete image from S3
+    // Not: Üretimde kuyruk sistemi (BullMQ) kullanılabilir / Note: Use queue (BullMQ) in production
+    if (post.image) {
+      await this.s3Service.deleteFile(post.image);
+    }
 
-    /* Veritabanı ve fiziksel dosyayı tamamen silmek istersek bu fonskiyonu kullanabiliriz.
+    return { message: 'Yazı başarıyla silindi. / Post deleted successfully (soft delete).' };
+  }
 
-    // Linkin Park < Faint > :) 
-
-    const deletedPost = await this.prisma.post.delete({
-      where: { id: postId },
-    })
-
-    // Eğer yazının bir resmi varsa fiziksel dosyayı da silelim
-    if (deletedPost.image) {
-      await this.deleteImageFile(deletedPost.image);
-    } */
-
-    return { message: 'Yazı başarıyla silindi (Soft delete).' };
+  // Resim yükle (S3) / Upload image to S3
+  async uploadToS3(file: Express.Multer.File) {
+    return await this.s3Service.uploadFile(file);
   }
 }

@@ -8,12 +8,13 @@ interface RequestWithUser extends Request {
 
 export const GetUser = createParamDecorator(
   (data: keyof UserEntity | undefined, ctx: ExecutionContext) => {
-    // switchToHttp().getRequest'e yeni tipimizi (<RequestWithUser>) veriyoruz
+    // HTTP isteğinden kullanıcı nesnesini çıkarır
+    // Extracts user object from the HTTP request
     const r = ctx.switchToHttp().getRequest<RequestWithUser>();
     if (data) {
-      return r.user[data]; // Sadece belirli bir alanı (örn: email) çekmek için
+      return r.user[data]; // Belirli bir alan döner (örn: email) / Returns specific field (e.g., email)
     }
-    // Eğer @GetUser('email') gibi spesifik bir alan istendiyse onu dön, yoksa tüm user'ı dön
+    // Tüm user nesnesini döner / Returns the full user object
     return r.user;
   },
 );

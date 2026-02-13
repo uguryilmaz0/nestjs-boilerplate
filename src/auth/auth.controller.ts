@@ -19,27 +19,27 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 export class AuthController {
   constructor(private authService: AuthService) { }
 
-  @ApiOperation({ summary: 'Yeni kullanıcı kaydı' })
-  @ApiResponse({ status: 201, description: 'Kullanıcı başarıyla oluşturuldu' })
-  @ApiResponse({ status: 403, description: 'E-posta zaten kullanımda' })
+  @ApiOperation({ summary: 'Yeni kullanıcı kaydı / Register a new user' })
+  @ApiResponse({ status: 201, description: 'Kullanıcı oluşturuldu / User created' })
+  @ApiResponse({ status: 403, description: 'E-posta zaten kullanımda / Email already in use' })
   @Post('signup')
   signup(@Body() dto: AuthDto) {
     return this.authService.signup(dto);
   }
 
-  @ApiOperation({ summary: 'Kullanıcı girişi' })
-  @ApiResponse({ status: 200, description: 'Başarılı giriş — JWT token döner' })
-  @ApiResponse({ status: 403, description: 'Geçersiz kimlik bilgileri' })
+  @ApiOperation({ summary: 'Kullanıcı girişi / User login' })
+  @ApiResponse({ status: 200, description: 'Başarılı giriş — JWT token döner / Successful login — returns JWT token' })
+  @ApiResponse({ status: 403, description: 'Geçersiz kimlik bilgileri / Invalid credentials' })
   @HttpCode(200)
   @Post('signin')
   signin(@Body() dto: LoginDto): Promise<AuthResponse> {
     return this.authService.signin(dto);
   }
 
-  @ApiOperation({ summary: 'Mevcut kullanıcı bilgilerini getir' })
+  @ApiOperation({ summary: 'Mevcut kullanıcı bilgilerini getir / Get current user profile' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Kullanıcı profili' })
-  @ApiResponse({ status: 401, description: 'Yetkisiz — Geçerli JWT token gereklidir' })
+  @ApiResponse({ status: 200, description: 'Kullanıcı profili / User profile' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz — Geçerli JWT token gereklidir / Unauthorized — Valid JWT required' })
   @UseGuards(AuthGuard('jwt'))
   @Get('me')
   getMe(@GetUser() user: UserEntity) {

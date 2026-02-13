@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # PostgreSQL veritabanı / PostgreSQL database
+  postgres:
+    image: postgres:16-alpine # Hafif Alpine sürümü / Lightweight Alpine image
+    container_name: my-postgres
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # MinIO (S3 uyumlu nesne deposu / S3-compatible object storage)
+  minio:
+    image: minio/minio
+    container_name: nestjs-storage
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+volumes:
+  minio_data:
+  postgres_data:

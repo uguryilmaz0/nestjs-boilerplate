@@ -22,12 +22,12 @@ enum Role {
 model User {
   id        Int       @id @default(autoincrement())
   email     String    @unique
-  password  String // Şifrelenmiş (hashed) halini tutacağız
+  password  String // Şifrelenmiş hali / Hashed password
   name      String?
-  role      Role      @default(USER) // Varsayılan rol USER
-  posts     Post[] // Bir kullanıcının birden fazla yazısı olabilir
+  role      Role      @default(USER) // Varsayılan rol / Default role
+  posts     Post[] // Kullanıcının yazıları / User's posts
   comments  Comment[]
-  deletedAt DateTime? // 🔥 Soft delete için ekledik
+  deletedAt DateTime? // Soft delete alanı / Soft delete field
 }
 
 model Post {
@@ -35,39 +35,39 @@ model Post {
   title     String
   content   String?
   published Boolean  @default(false)
-  slug      String   @unique // URL'de id yerine görünecek kısım
-  image     String? // 🔥 Yeni ekledik: Resmin sunucudaki yolu (opsiyonel)
+  slug      String   @unique // SEO-uyumlu URL / SEO-friendly URL
+  image     String? // S3 resim URL'si / S3 image URL (optional)
   createdAt DateTime @default(now())
   tags      Tag[]
 
   author    User?     @relation(fields: [authorId], references: [id])
   authorId  Int?
   comments  Comment[]
-  deletedAt DateTime? // 🔥 Soft delete için ekledik
+  deletedAt DateTime? // Soft delete alanı / Soft delete field
 
-  @@index([title, content]) // 🔥 Arama performansı için index ekledik
+  @@index([title, content]) // Tam metin arama indeksi / Full-text search index
 }
 
 model Tag {
   id    Int    @id @default(autoincrement())
-  slug  String @unique // 🔥 Benzersizlik ve arama için (nestjs)
-  name  String @unique // 🔥 Görüntüleme için (NestJS)
-  posts Post[] // many to many (Çokça çok ilişkisi)
+  slug  String @unique // Benzersiz arama anahtarı / Unique search key (nestjs)
+  name  String @unique // Görüntüleme adı / Display name (NestJS)
+  posts Post[] // Çoka-çok ilişki / Many-to-many relation
 }
 
 model Comment {
   id        Int       @id @default(autoincrement())
-  content   String // Yorumun içeriği
-  createdAt DateTime  @default(now()) // Yorumun oluşturulma zamanı
-  updatedAt DateTime  @updatedAt // Yorumun güncellenme zamanı
-  deletedAt DateTime? // 🔥 Soft delete için ekledik
+  content   String // Yorum içeriği / Comment content
+  createdAt DateTime  @default(now()) // Oluşturulma zamanı / Created at
+  updatedAt DateTime  @updatedAt // Güncellenme zamanı / Updated at
+  deletedAt DateTime? // Soft delete alanı / Soft delete field
 
-  // 🔗 İLİŞKİLER
-  // Yorumu yapan kullanıcı ile bağlantı
+  // İlişkiler / Relations
+  // Yorum sahibi / Comment author
   author   User @relation(fields: [authorId], references: [id])
   authorId Int
 
-  // Yorumun yapıldığı yazı ile bağlantı
+  // Yorumun ait olduğu yazı / Post this comment belongs to
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId Int
 }

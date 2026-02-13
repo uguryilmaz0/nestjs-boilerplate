@@ -13,10 +13,10 @@ export class RolesGuard implements CanActivate {
             context.getClass(),
         ]);
 
-        if (!requiredRoles) return true; // Eğer rota üzerinde rol tanımlanmamışsa, erişime izin ver
+        if (!requiredRoles) return true; // Rol tanımlanmamışsa erişime izin ver / Allow if no roles defined
 
         const { user } = context.switchToHttp().getRequest();
 
-        return requiredRoles.includes(user.role); // Kullanıcının rolü, gerekli roller arasında mı?
+        return requiredRoles.includes(user.role); // Kullanıcı rolü uyuyor mu? / Does user role match?
     }
 }

@@ -1,236 +1,94 @@
-# Changelog
+# Changelog / Değişiklik Günlüğü
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file.
+Bu projedeki tüm önemli değişiklikler bu dosyada belgelenir.
 
-### [1.0.1](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.1.0...v1.0.1) (2026-02-13)
-
-# 📋 Değişiklik Raporu (Changelog)
-
-Bu dosya, projenin **GitHub'a açık kaynak olarak yayınlanmadan önce** yapılan tüm iyileştirme, düzeltme ve profesyonelleştirme çalışmalarını detaylıca açıklar.
+See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ---
 
-## 📑 İçindekiler
+## [1.2.0] — 2026-02-14
 
-1. [Swagger Entegrasyonu (Detaylı Açıklama)](#1--swagger-entegrasyonu)
-2. [Kod Yorumları Profesyonelleştirildi](#2--kod-yorumları-profesyonelleştirildi)
-3. [Dead Code Temizliği](#3--dead-code-temizliği)
-4. [GitHub Açık Kaynak Hazırlığı](#4--github-açık-kaynak-hazırlığı)
-5. [Branding Düzeltmesi](#5--branding-düzeltmesi)
-6. [README.md Oluşturuldu](#6--readmemd-oluşturuldu)
-7. [.gitignore Düzeltmesi](#7--gitignore-düzeltmesi)
+### Added / Eklenenler
+- **Bilingual comments (TR + EN)** across all source files for open-source accessibility
+  Tüm kaynak dosyalara Türkçe + İngilizce çift dilli yorumlar eklendi
+- **Bilingual Swagger descriptions** on all API endpoints and DTOs
+  Tüm API endpoint ve DTO'larına çift dilli Swagger açıklamaları eklendi
+- **Bilingual error messages** (`"TR mesaj / EN message"` format)
+  Hata mesajları çift dilli formata çevrildi
 
----
-
-## 1. 📖 Swagger Entegrasyonu
-
-### Swagger Nedir?
-
-**Swagger (OpenAPI)**, REST API'lerin otomatik olarak dökümante edilmesini sağlayan bir standarttır. NestJS'te `@nestjs/swagger` paketi kullanılarak entegre edilir. Sonuç olarak tarayıcıdan `/api/docs` adresine gidildiğinde, tüm endpoint'ler görsel bir arayüzde test edilebilir hale gelir.
-
-### Neden Gerekli?
-
-Swagger olmadan:
-- Frontend geliştiricisi hangi endpoint'e ne gönderilmesi gerektiğini bilmez
-- Her endpoint için ayrı dökümantasyon yazmak gerekir
-- API'yi test etmek için Postman gibi harici araçlar şarttır
-- Açık kaynak projelerde katkıda bulunanlar API'yi anlamakta zorlanır
-
-Swagger ile:
-- **Otomatik dökümantasyon** — Kod değişince döküman da güncellenir
-- **Interaktif test** — Tarayıcıdan doğrudan API çağrısı yapılabilir
-- **JWT desteği** — Kilit ikonuna tıklayıp token girilerek korumalı endpoint'ler test edilebilir
-- **Request/Response şemaları** — DTO'lar otomatik olarak görsel şemaya dönüşür
-
-### Ne Yapıldı?
-
-Proje'de `main.ts` dosyasında Swagger setup zaten vardı, ama **hiçbir controller veya DTO'da Swagger dekoratörü yoktu**. Bu yüzden `/api/docs` açıldığında endpoint'ler listeleniyordu ama:
-- Açıklamaları boştu
-- Request body şemaları görünmüyordu
-- Response tipleri belirsizdi
-- JWT ile test edilemiyordu
-
-### Eklenen Swagger Dekoratörleri
-
-#### Controller Düzeyinde
-
-| Dekoratör | Açıklama | Kullanıldığı Yer |
-|-----------|----------|-----------------|
-| `@ApiTags('Blog')` | Endpoint'leri Swagger UI'da gruplandırır | Her controller'ın en üstü |
-| `@ApiOperation({ summary: '...' })` | Her endpoint'e açıklama ekler | Her metod üstü |
-| `@ApiResponse({ status: 200, description: '...' })` | Olası HTTP yanıtlarını tanımlar | Her metod üstü |
-| `@ApiBearerAuth()` | JWT gerektiren endpoint'lere kilit ikonu ekler | Korumalı endpoint'ler |
-| `@ApiParam({ name: 'id' })` | URL parametrelerini açıklar | `:id` içeren rotalar |
-| `@ApiQuery({ name: 'q' })` | Query string parametrelerini açıklar | Search endpoint |
-| `@ApiConsumes('multipart/form-data')` | File upload content-type belirtir | Upload endpoint |
-| `@ApiBody({ schema: ... })` | Dosya yükleme şemasını tanımlar | Upload endpoint |
-
-#### DTO Düzeyinde
-
-| Dekoratör | Açıklama | Örnek |
-|-----------|----------|-------|
-| `@ApiProperty({ example: '...' })` | Zorunlu alanları Swagger'da gösterir | `email`, `password`, `title` |
-| `@ApiPropertyOptional({ example: '...' })` | Opsiyonel alanları gösterir | `name`, `tags`, `image` |
-
-#### Önemli: UpdatePostsDto Değişikliği
-
-```typescript
-// ÖNCE — Swagger şeması üretilmiyordu
-import { PartialType } from '@nestjs/mapped-types';
-
-// SONRA — Swagger şeması otomatik üretilir
-import { PartialType } from '@nestjs/swagger';
-```
-
-**Neden?** `@nestjs/mapped-types`'ın `PartialType`'ı sadece validasyonu kopyalar. `@nestjs/swagger`'ın `PartialType`'ı ise hem validasyonu hem de Swagger şemasını kopyalar. Bu sayede `UpdatePostsDto` Swagger'da doğru şekilde görünür.
-
-### Swagger Nasıl Kullanılır?
-
-1. Uygulamayı başlatın: `npm run start:dev`
-2. Tarayıcıda açın: `http://localhost:3000/api/docs`
-3. JWT gerektiren endpoint'leri test etmek için:
-   - Önce `POST /api/auth/signin` ile giriş yapın
-   - Dönen `access_token` değerini kopyalayın
-   - Sağ üstteki **"Authorize"** butonuna tıklayın
-   - `Bearer <token>` formatında yapıştırın
-   - Artık korumalı endpoint'leri test edebilirsiniz
+### Changed / Değişenler
+- **README.md** completely reshaped with S3, soft delete, Docker, search sections
+  README.md yeniden şekillendirildi: S3, soft delete, Docker, arama bölümleri eklendi
+- **CHANGELOG.md** rewritten in bilingual format (TR + EN)
+  CHANGELOG.md çift dilli formatta yeniden yazıldı
+- **.env.example** comments made bilingual
+  .env.example yorumları çift dilli yapıldı
+- **Swagger version** updated to `1.2.0`
+  Swagger versiyonu `1.2.0` olarak güncellendi
+- **Logger messages** converted to English for production compatibility
+  Logger mesajları üretim uyumluluğu için İngilizceye çevrildi
+- Removed emoji prefixes (`���`, `���`, `❌`) from code comments
+  Kod yorumlarından emoji ön ekleri kaldırıldı
 
 ---
 
-## 2. ✏️ Kod Yorumları Profesyonelleştirildi
+## [1.1.0] — 2026-02-13
 
-### Neden?
+### Added / Eklenenler
+- **Soft delete** (`deletedAt: DateTime?`) on User, Post, and Comment models
+  User, Post ve Comment modellerine soft delete eklendi
+- **S3 file upload service** (`src/common/services/s3.service.ts`) — supports AWS S3, MinIO, Supabase
+  S3 dosya yükleme servisi eklendi — AWS S3, MinIO, Supabase desteği
+- **Docker Compose** configuration with PostgreSQL 16 + MinIO
+  Docker Compose konfigürasyonu eklendi: PostgreSQL 16 + MinIO
+- **Full-text search** using PostgreSQL `tsvector` with `@@index([title, content])`
+  PostgreSQL `tsvector` ile tam metin arama eklendi
+- **standard-version** for semantic versioning
+  Semantik sürümleme için standard-version eklendi
+- **`@aws-sdk/client-s3`** and **`@aws-sdk/lib-storage`** dependencies
+  AWS S3 SDK bağımlılıkları eklendi
+- S3 environment variables in `.env.example`
+  `.env.example` dosyasına S3 ortam değişkenleri eklendi
 
-Açık kaynak bir projede informal ifadeler (argo, şaka, şarkı sözleri) profesyonel görünmez ve uluslararası katkıda bulunanlar için kafa karıştırıcı olur.
-
-### Değiştirilen İfadeler
-
-| Dosya | Eski | Yeni |
-|-------|------|------|
-| `auth.dto.ts` | "kardeşim" | Resmi doğrulama mesajları |
-| `login.dto.ts` | "kanka", "dostum" | Resmi doğrulama mesajları |
-| `auth.service.ts` | "kardeşim", "dostum", "Güvenlik herşeydir!!!" | Kurumsal ton |
-| `blog.controller.ts` | "kanka" | Resmi hata mesajı |
-| `blog.service.ts` | Linkin Park şarkı sözleri, "zzz" | `"Yazı başarıyla silindi."` |
-| `image-type.validator.ts` | "kanka" | Resmi mesaj |
-| `main.ts` | "Tühhh" | `"Kritik bir hata oluştu"` |
-| `http-exception.filter.ts` | `proje: 'NestJS Eğitim Projesi'` | `project: 'NestJS Boilerplate'` |
-
----
-
-## 3. 🧹 Dead Code Temizliği
-
-### Neden?
-
-Kullanılmayan kod, projenin bakımını zorlaştırır ve açık kaynak incelemelerde kötü izlenim bırakır.
-
-### Silinen Kodlar
-
-| Dosya | Silinen | Sebep |
-|-------|---------|-------|
-| `blog.service.ts` | `getHaberMesaji()` | Demo/eğitim amaçlı metod, gerçek bir iş mantığı yok |
-| `blog.service.ts` | `getYazilar()` | Hiçbir yerde çağrılmıyordu |
-| `blog.service.ts` | `import { Post }` | Yukarıdakiler silinince gereksiz kaldı |
-
-### Düzeltilen Bağımlılık
-
-`blog.controller.ts`'teki `search` endpoint'i `getHaberMesaji()`'ı çağırıyordu. Bu metod silindiği için, `search` endpoint'i artık gerçek bir arama yapacak şekilde `getPosts({ search: q })` metoduna bağlandı.
+### Changed / Değişenler
+- **Blog delete endpoint** now uses soft delete instead of hard delete
+  Blog silme endpoint'i artık soft delete kullanıyor
+- **Blog upload endpoint** now uploads to S3 instead of local disk
+  Blog resim yükleme artık yerel disk yerine S3'e yüklüyor
+- **Blog search** refactored from `contains` to `tsvector` for better performance
+  Blog araması performans için `tsvector` kullanacak şekilde refactor edildi
+- Soft delete filter (`deletedAt: null`) applied to all read queries
+  Tüm okuma sorgularına soft delete filtresi eklendi
 
 ---
 
-## 4. 📦 GitHub Açık Kaynak Hazırlığı
+## [1.0.0] — 2026-02-12
 
-### Oluşturulan Dosyalar
+### Added / Eklenenler
+- **Full Swagger/OpenAPI integration** — `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBearerAuth`, `@ApiParam`, `@ApiQuery`, `@ApiConsumes`, `@ApiBody` decorators on all controllers
+  Swagger/OpenAPI entegrasyonu — tüm controller'lara dekoratörler eklendi
+- **Swagger DTO schemas** — `@ApiProperty` / `@ApiPropertyOptional` on all DTOs
+  Tüm DTO'lara Swagger şemaları eklendi
+- **`UpdatePostsDto`** switched to `PartialType` from `@nestjs/swagger` for proper schema generation
+  Swagger şema üretimi için `@nestjs/swagger`'dan `PartialType` kullanıldı
+- **`.env.example`** file for environment variable documentation
+  Ortam değişkenleri dokümantasyonu için `.env.example` dosyası oluşturuldu
+- **`LICENSE`** (MIT) file added
+  MIT lisans dosyası eklendi
+- **Professional README.md** with badges, architecture, API docs, setup guide
+  Profesyonel README.md oluşturuldu
 
-| Dosya | Açıklama |
-|-------|----------|
-| `.env.example` | Geliştiricilerin hangi environment variable'lara ihtiyaç olduğunu görmesi için şablon dosya. `.env` dosyası `.gitignore`'da olduğundan repo'ya dahil edilmez — bu dosya onun yerine rehber görevi görür |
-| `LICENSE` | MIT lisansı — açık kaynak projelerde olmazsa olmaz. Katkıda bulunanlar ve kullanıcılar yasal haklarını bilir |
+### Changed / Değişenler
+- **Code comments** cleaned — informal Turkish expressions replaced with professional language
+  Kod yorumları temizlendi — gayri resmi ifadeler profesyonel dile çevrildi
+- **`package.json`** — name changed to `nestjs-boilerplate`, version set to `1.0.0`
+  Paket adı `nestjs-boilerplate` olarak değiştirildi
+- **`.gitignore`** — fixed to only ignore `/prisma/generated` instead of entire `/prisma` directory
+  `.gitignore` düzeltildi: tüm `/prisma` yerine sadece `/prisma/generated` yok sayılıyor
 
-### package.json Güncellemeleri
-
-| Alan | Eski | Yeni | Sebep |
-|------|------|------|-------|
-| `name` | `first-my-backend` | `nestjs-boilerplate` | Profesyonel ve tanımlayıcı isim |
-| `version` | `0.0.1` | `1.0.0` | İlk kararlı sürüm olarak semantic versioning |
-
----
-
-## 5. 🏷 Branding Düzeltmesi
-
-### Neden?
-
-"Senior" ifadesi farkındalık sorunu yaratabilir — sanki "sadece seniorlar kullanabilir" veya "ben seniorim" mesajı verir. Sade ve profesyonel bir isimlendirme tercih edildi.
-
-### Değiştirilen Yerler
-
-- `main.ts` → Swagger başlığı
-- `http-exception.filter.ts` → Error response `project` alanı
-- `README.md` → 5 ayrı yerde (başlık, açıklama, git clone URL'i, JSON örneği)
-
----
-
-## 6. 📄 README.md Oluşturuldu
-
-### Neden?
-
-README, bir GitHub reposunun **vitrinidir**. Açık kaynak projelerde README kalitesi, projenin ciddiyetini doğrudan yansıtır.
-
-### İçerik
-
-- Teknoloji badge'leri (NestJS, Prisma, PostgreSQL, TypeScript, Swagger)
-- Mimari diyagram (ASCII art)
-- Feature tabloları (Auth, Blog, Comment, Security)
-- Tüm API endpoint'leri (method, path, auth durumu, açıklama)
-- Database schema ve entity ilişkileri
-- Adım adım kurulum rehberi
-- Response format örnekleri (Success/Error JSON)
-- Security checklist
-- Script referans tablosu
-
----
-
-## 7. 🔧 .gitignore Düzeltmesi
-
-### Neden?
-
-Orijinal `.gitignore` dosyasında `/prisma` klasörü tamamen ignore edilmişti. Bu **tehlikeli** bir durumdur çünkü:
-
-- **Prisma schema** (`schema.prisma`) → Veritabanı yapısının tek kaynağı. Repo'da olmazsa kimse veritabanını yeniden oluşturamaz
-- **Migration dosyaları** → Veritabanı evrim geçmişi. Bunlar olmadan `prisma migrate deploy` çalışmaz
-
-### Yapılan Değişiklik
-
-```diff
-- /prisma
-+ /prisma/generated    # Sadece generated client ignore edilir
-+ /uploads/*           # Kullanıcı dosyaları repoya dahil edilmez
-+ !/uploads/.gitkeep   # Klasör yapısı korunur
-```
-
----
-
-## 📊 Etkilenen Dosya Özeti
-
-| # | Dosya | İşlem |
-|---|-------|-------|
-| 1 | `src/auth/auth.controller.ts` | Swagger dekoratörleri eklendi |
-| 2 | `src/auth/auth.service.ts` | Yorum ve mesaj düzeltmeleri |
-| 3 | `src/auth/dto/auth.dto.ts` | Swagger + mesaj düzeltmeleri |
-| 4 | `src/auth/dto/login.dto.ts` | Swagger + mesaj düzeltmeleri |
-| 5 | `src/blog/blog.controller.ts` | Swagger dekoratörleri + dead code bağlantısı |
-| 6 | `src/blog/blog.service.ts` | Dead code temizliği + yorum düzeltmeleri |
-| 7 | `src/blog/dto/create-posts.dto.ts` | Swagger dekoratörleri |
-| 8 | `src/blog/dto/update-post.dto.ts` | `PartialType` import kaynağı değiştirildi |
-| 9 | `src/blog/dto/get-posts-query.dto.ts` | Swagger dekoratörleri |
-| 10 | `src/comment/comment.controller.ts` | Swagger dekoratörleri |
-| 11 | `src/comment/dto/create-comment.dto.ts` | Swagger + `@IsInt()` eklendi |
-| 12 | `src/common/filters/http-exception.filter.ts` | project adı güncellendi |
-| 13 | `src/common/validators/image-type.validator.ts` | Hata mesajı düzeltildi |
-| 14 | `src/main.ts` | Swagger açıklaması + hata mesajı |
-| 15 | `package.json` | name + version güncellendi |
-| 16 | `README.md` | Sıfırdan profesyonel dökümantasyon |
-| 17 | `.env.example` | **Yeni dosya** |
-| 18 | `LICENSE` | **Yeni dosya** |
-| 19 | `.gitignore` | Prisma + uploads düzeltmesi |
-| 20 | `CHANGELOG.md` | **Bu dosya** |
+### Removed / Kaldırılanlar
+- Dead code: `getHaberMesaji()`, `getYazilar()` functions
+  Kullanılmayan fonksiyonlar kaldırıldı
+- Unused local file upload middleware (replaced by S3 in v1.1.0)
+  Kullanılmayan yerel dosya yükleme middleware'i kaldırıldı
