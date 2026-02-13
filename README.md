@@ -22,38 +22,40 @@
 
 ---
 
-## 📋 Table of Contents
+## 📋 Table of Contents / İçindekiler
 
-- [Overview](#-overview)
-- [Architecture](#-architecture)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [Project Structure](#-project-structure)
-- [API Endpoints](#-api-endpoints)
-- [Database Schema](#-database-schema)
-- [S3 / MinIO Storage](#-s3--minio-storage)
-- [Docker Compose Services](#-docker-compose-services)
-- [Environment Variables](#-environment-variables)
-- [Scripts](#-scripts)
-- [Security](#-security)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Overview / Genel Bakış](#-overview--genel-bakış)
+- [Architecture / Mimari](#-architecture--mimari)
+- [Features / Özellikler](#-features--özellikler)
+- [Tech Stack / Teknoloji](#-tech-stack--teknoloji)
+- [Getting Started / Hızlı Başlangıç](#-getting-started--hızlı-başlangıç)
+- [Project Structure / Proje Yapısı](#-project-structure--proje-yapısı)
+- [API Endpoints / API Uç Noktaları](#-api-endpoints--api-uç-noktaları)
+- [Database Schema / Veritabanı Şeması](#-database-schema--veritabanı-şeması)
+- [S3 / MinIO Storage / S3 Depolama](#-s3--minio-storage--s3-depolama)
+- [Docker Compose Services / Docker Servisleri](#-docker-compose-services--docker-servisleri)
+- [Environment Variables / Ortam Değişkenleri](#-environment-variables--ortam-değişkenleri)
+- [Scripts / Komutlar](#-scripts--komutlar)
+- [Security / Güvenlik](#-security--güvenlik)
+- [Contributing / Katkıda Bulunma](#-contributing--katkıda-bulunma)
+- [License / Lisans](#-license--lisans)
 
 ---
 
-## 🎯 Overview
+## 🎯 Overview / Genel Bakış
 
 **NestJS Boilerplate** is a production-ready backend boilerplate designed with clean architecture principles. It can be used as a foundation for any scalable REST API.
 
-Key design decisions:
-- **Modular architecture** — each domain (Auth, Blog, Comment) is a self-contained module
-- **Database-first approach** — Prisma ORM with migration history for safe schema evolution
-- **Security by default** — JWT authentication, RBAC, input validation, and exception filtering out of the box
+> **TR:** Temiz mimari prensipleriyle tasarlanmış, üretime hazır bir backend şablonudur. Herhangi bir ölçeklenebilir REST API için temel olarak kullanılabilir.
+
+Key design decisions / Temel tasarım kararları:
+- **Modular architecture / Modüler mimari** — each domain (Auth, Blog, Comment) is a self-contained module / her alan kendi içinde bağımsız bir modüldür
+- **Database-first approach / Veritabanı öncelikli yaklaşım** — Prisma ORM with migration history for safe schema evolution / güvenli şema evrimi için migration geçmişi
+- **Security by default / Varsayılan güvenlik** — JWT authentication, RBAC, input validation, and exception filtering out of the box / JWT, RBAC, girdi doğrulama ve hata filtreleme hazır olarak gelir
 
 ---
 
-## 🏗 Architecture
+## 🏗 Architecture / Mimari
 
 ```
 Client Request
@@ -92,52 +94,52 @@ Client Request
 
 ---
 
-## ✨ Features
+## ✨ Features / Özellikler
 
-### 🔐 Authentication & RBAC
+### 🔐 Authentication & RBAC / Kimlik Doğrulama & Rol Tabanlı Erişim
 
-| Feature | Description |
+| Feature / Özellik | Description / Açıklama |
 |---------|-------------|
-| JWT Authentication | Stateless token-based auth with configurable expiration (`passport-jwt`) |
-| Role-Based Access Control | 4-tier role system: `ADMIN`, `AUTHOR`, `PREMIUM`, `USER` |
-| Password Hashing | bcrypt with salt rounds for secure storage |
-| Custom Decorators | `@GetUser()` for request user extraction, `@Roles()` for route protection |
-| Serialization | Automatic password exclusion from API responses via `class-transformer` |
+| JWT Authentication / JWT Kimlik Doğrulama | Stateless token-based auth with configurable expiration (`passport-jwt`) / Yapılandırılabilir süreli durumsuz token tabanlı kimlik doğrulama |
+| Role-Based Access Control / Rol Tabanlı Erişim | 4-tier role system / 4 seviyeli rol sistemi: `ADMIN`, `AUTHOR`, `PREMIUM`, `USER` |
+| Password Hashing / Şifre Hashleme | bcrypt with salt rounds for secure storage / Güvenli depolama için bcrypt |
+| Custom Decorators / Özel Dekoratörler | `@GetUser()` for request user extraction, `@Roles()` for route protection / Kullanıcı çıkarma ve rota koruma |
+| Serialization / Serileştirme | Automatic password exclusion from API responses via `class-transformer` / API yanıtlarından otomatik şifre gizleme |
 
-### 📝 Blog Engine
+### 📝 Blog Engine / Blog Motoru
 
-| Feature | Description |
+| Feature / Özellik | Description / Açıklama |
 |---------|-------------|
-| CRUD Operations | Full create, read, update, soft delete with ownership validation |
-| Pagination | Configurable `page` & `limit` with total count metadata |
-| Full-Text Search | PostgreSQL `tsvector` with `@@index` on title & content |
-| Tag Filtering | Many-to-many tag system with slug-based filtering |
-| SEO Slugs | Auto-generated URL-friendly slugs via `slugify` |
-| Image Upload | S3-compatible file upload with type/size validation (max 2MB) |
+| CRUD Operations / CRUD İşlemleri | Full create, read, update, soft delete with ownership validation / Sahiplik doğrulamalı tam CRUD |
+| Pagination / Sayfalama | Configurable `page` & `limit` with total count metadata / Toplam sayı metadatalı yapılandırılabilir sayfalama |
+| Full-Text Search / Tam Metin Arama | PostgreSQL `tsvector` with `@@index` on title & content / Başlık ve içerikte tam metin arama |
+| Tag Filtering / Etiket Filtreleme | Many-to-many tag system with slug-based filtering / Slug tabanlı çoka-çok etiket sistemi |
+| SEO Slugs / SEO Uyumlu URL | Auto-generated URL-friendly slugs via `slugify` / Otomatik oluşturulan SEO uyumlu URL'ler |
+| Image Upload / Resim Yükleme | S3-compatible file upload with type/size validation (max 2MB) / Tip/boyut doğrulamalı S3 uyumlu yükleme |
 
-### 💬 Comment System
+### 💬 Comment System / Yorum Sistemi
 
-| Feature | Description |
+| Feature / Özellik | Description / Açıklama |
 |---------|-------------|
-| Authenticated Comments | JWT-protected comment creation |
-| Cascade Delete | Comments auto-deleted when parent post is removed |
-| Author Association | Each comment linked to authenticated user |
+| Authenticated Comments / Kimlik Doğrulamalı Yorumlar | JWT-protected comment creation / JWT korumalı yorum oluşturma |
+| Cascade Delete / Kademeli Silme | Comments auto-deleted when parent post is removed / Yazı silindiğinde yorumlar otomatik silinir |
+| Author Association / Yazar İlişkilendirme | Each comment linked to authenticated user / Her yorum kimliği doğrulanmış kullanıcıya bağlı |
 
-### 🛡 Security & Quality
+### 🛡 Security & Quality / Güvenlik & Kalite
 
-| Feature | Description |
+| Feature / Özellik | Description / Açıklama |
 |---------|-------------|
-| Global Validation | `ValidationPipe` with whitelist & forbidNonWhitelisted |
-| Exception Filter | Standardized error response format with logging |
-| CORS Configuration | Pre-configured for common frontend ports |
-| Soft Delete | `deletedAt` field on User, Post, Comment — records are never physically deleted |
-| Swagger Documentation | Interactive API docs at `/api/docs` |
+| Global Validation / Global Doğrulama | `ValidationPipe` with whitelist & forbidNonWhitelisted / Beyaz liste modunda doğrulama |
+| Exception Filter / Hata Filtresi | Standardized error response format with logging / Yapılandırılmış hata yanıt formatı |
+| CORS Configuration / CORS Yapılandırması | Pre-configured for common frontend ports / Yaygın frontend portları için önceden yapılandırılmış |
+| Soft Delete / Yumuşak Silme | `deletedAt` field on User, Post, Comment — records are never physically deleted / Kayıtlar asla fiziksel olarak silinmez |
+| Swagger Documentation / Swagger Dokümantasyonu | Interactive API docs at `/api/docs` / `/api/docs` adresinde interaktif API belgeleri |
 
 ---
 
-## 🧰 Tech Stack
+## 🧰 Tech Stack / Teknoloji
 
-| Layer | Technology |
+| Layer / Katman | Technology / Teknoloji |
 |-------|-----------|
 | **Runtime** | Node.js 18+ |
 | **Framework** | NestJS 11.1 |
@@ -153,49 +155,50 @@ Client Request
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started / Hızlı Başlangıç
 
-### Prerequisites
+### Prerequisites / Gereksinimler
 
 - **Node.js** >= 18.x
-- **PostgreSQL** 16+ (or Docker)
+- **PostgreSQL** 16+ (or Docker / veya Docker)
 - **npm** or yarn
 
-### Installation
+### Installation / Kurulum
 
 ```bash
-# 1. Clone the repository
+# 1. Clone the repository / Repoyu klonla
 git clone https://github.com/uguryilmaz0/nestjs-boilerplate.git
 cd nestjs-boilerplate
 
-# 2. Install dependencies
+# 2. Install dependencies / Bağımlılıkları kur
 npm install
 
-# 3. Configure environment variables
+# 3. Configure environment variables / Ortam değişkenlerini yapılandır
 cp .env.example .env
 # Edit .env with your database credentials and JWT secret
+# .env dosyasını kendi veritabanı bilgilerinizle düzenleyin
 
-# 4. Start services (Option A: Docker — Recommended)
+# 4. Start services (Option A: Docker — Recommended / Önerilen)
 docker-compose up -d
 
-# 4. Or use local PostgreSQL (Option B)
+# 4. Or use local PostgreSQL (Option B) / Veya yerel PostgreSQL kullanın
 # Update DATABASE_URL in .env with your local connection string
 
-# 5. Run database migrations
+# 5. Run database migrations / Migration'ları çalıştır
 npx prisma migrate dev
 
-# 6. Start the development server
+# 6. Start the development server / Geliştirme sunucusunu başlat
 npm run start:dev
 ```
 
-### Verify Installation
+### Verify Installation / Kurulumu Doğrula
 
 - **API Base URL:** [http://localhost:3000/api](http://localhost:3000/api)
 - **Swagger Docs:** [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure / Proje Yapısı
 
 ```
 src/
@@ -258,7 +261,7 @@ docker-compose.yml                   # PostgreSQL + MinIO
 
 ---
 
-## 📡 API Endpoints
+## 📡 API Endpoints / API Uç Noktaları
 
 ### Auth (`/api/auth`)
 
@@ -286,20 +289,20 @@ docker-compose.yml                   # PostgreSQL + MinIO
 |--------|----------|------|-------------|
 | `POST` | `/comment` | 🔒 JWT | Add comment / Yorum ekle |
 
-### Query Parameters (Blog Listing)
+### Query Parameters / Sorgu Parametreleri (Blog Listing / Blog Listesi)
 
-| Parameter | Type | Default | Description |
+| Parameter / Parametre | Type / Tip | Default / Varsayılan | Description / Açıklama |
 |-----------|------|---------|-------------|
-| `page` | `number` | `1` | Page number |
-| `limit` | `number` | `10` | Items per page |
-| `search` | `string` | — | Search in title & content |
-| `tag` | `string` | — | Filter by tag slug |
+| `page` | `number` | `1` | Page number / Sayfa numarası |
+| `limit` | `number` | `10` | Items per page / Sayfa başına öğe |
+| `search` | `string` | — | Search in title & content / Başlık ve içerikte ara |
+| `tag` | `string` | — | Filter by tag slug / Etiket slug'ına göre filtrele |
 
 **Example:** `GET /api/blog?page=2&limit=5&tag=nestjs&search=prisma`
 
 ---
 
-## 🗄 Database Schema
+## 🗄 Database Schema / Veritabanı Şeması
 
 ```prisma
 enum Role { USER, AUTHOR, ADMIN, PREMIUM }
@@ -351,36 +354,40 @@ model Comment {
 }
 ```
 
-### Entity Relationships
+### Entity Relationships / Varlık İlişkileri
 
 ```
-User  1──N  Post       (Author can have many posts)
-User  1──N  Comment    (User can have many comments)
-Post  1──N  Comment    (Post can have many comments, cascade delete)
-Post  N──M  Tag        (Many-to-many via implicit join table)
+User  1──N  Post       (Author can have many posts / Yazarın birçok yazısı olabilir)
+User  1──N  Comment    (User can have many comments / Kullanıcının birçok yorumu olabilir)
+Post  1──N  Comment    (Post can have many comments, cascade delete / Yazının birçok yorumu olabilir, kademeli silme)
+Post  N──M  Tag        (Many-to-many via implicit join table / Çoka-çok ilişki)
 ```
 
 **Roles:** `USER` · `AUTHOR` · `ADMIN` · `PREMIUM`
 
 ---
 
-## ☁ S3 / MinIO Storage
+## ☁ S3 / MinIO Storage / S3 Depolama
 
 The project supports S3-compatible object storage for file uploads:
 
-| Provider | Configuration |
+> **TR:** Proje, dosya yüklemeleri için S3 uyumlu nesne depolamayı destekler.
+
+| Provider / Sağlayıcı | Configuration / Yapılandırma |
 |----------|--------------|
-| **AWS S3** | Set `AWS_S3_REGION`, `AWS_S3_BUCKET_NAME`, credentials |
+| **AWS S3** | Set `AWS_S3_REGION`, `AWS_S3_BUCKET_NAME`, credentials / Kimlik bilgilerini ayarlayın |
 | **MinIO** | Set `AWS_S3_ENDPOINT=http://localhost:9000` |
-| **Supabase** | Set `AWS_S3_ENDPOINT` to your Supabase storage URL |
+| **Supabase** | Set `AWS_S3_ENDPOINT` to your Supabase storage URL / Supabase depolama URL'nizi ayarlayın |
 
 MinIO console is available at `http://localhost:9001` when using Docker Compose.
 
+> **TR:** Docker Compose kullanırken MinIO konsolu `http://localhost:9001` adresinde erişilebilir.
+
 ---
 
-## 🐳 Docker Compose Services
+## 🐳 Docker Compose Services / Docker Servisleri
 
-| Service | Port | Description |
+| Service / Servis | Port | Description / Açıklama |
 |---------|------|-------------|
 | PostgreSQL 16 | `5432` | Database / Veritabanı |
 | MinIO | `9000` / `9001` | S3-compatible storage / S3 uyumlu depolama |
@@ -392,9 +399,9 @@ docker-compose down     # Stop / Durdur
 
 ---
 
-## ⚙ Environment Variables
+## ⚙ Environment Variables / Ortam Değişkenleri
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root: / Proje kök dizininde bir `.env` dosyası oluşturun:
 
 ```env
 # Database
@@ -415,45 +422,47 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 ```
 
 > ⚠️ **Never commit `.env` to version control.** Use `.env.example` as a template.
+>
+> **TR:** `.env` dosyasını asla versiyon kontrolüne eklemeyin. Şablon olarak `.env.example` kullanın.
 
 ---
 
-## 📜 Scripts
+## 📜 Scripts / Komutlar
 
-| Script | Command | Description |
+| Script | Command / Komut | Description / Açıklama |
 |--------|---------|-------------|
-| **Dev** | `npm run start:dev` | Start with hot-reload (watch mode) |
-| **Build** | `npm run build` | Compile TypeScript to `dist/` |
-| **Production** | `npm run start:prod` | Run compiled application |
-| **Lint** | `npm run lint` | Run ESLint with auto-fix |
-| **Format** | `npm run format` | Run Prettier on source files |
-| **Release** | `npm run release` | Bump version (standard-version) |
-| **Migrate** | `npx prisma migrate dev` | Apply pending database migrations |
-| **Studio** | `npx prisma studio` | Open Prisma visual database browser |
-| **Generate** | `npx prisma generate` | Regenerate Prisma Client |
+| **Dev** | `npm run start:dev` | Start with hot-reload / Canlı yeniden yükleme ile başlat |
+| **Build** | `npm run build` | Compile TypeScript to `dist/` / TypeScript derle |
+| **Production** | `npm run start:prod` | Run compiled application / Derlenmiş uygulamayı çalıştır |
+| **Lint** | `npm run lint` | Run ESLint with auto-fix / ESLint kod analizi |
+| **Format** | `npm run format` | Run Prettier on source files / Prettier biçimlendirme |
+| **Release** | `npm run release` | Bump version (standard-version) / Sürüm yükselt |
+| **Migrate** | `npx prisma migrate dev` | Apply pending migrations / Migration'ları uygula |
+| **Studio** | `npx prisma studio` | Open Prisma database browser / Veritabanı arayüzünü aç |
+| **Generate** | `npx prisma generate` | Regenerate Prisma Client / Prisma Client'ı yeniden oluştur |
 
 ---
 
-## 🛡 Security
+## 🛡 Security / Güvenlik
 
-### Checklist
+### Checklist / Kontrol Listesi
 
-- [x] Passwords hashed with bcrypt (10 salt rounds)
-- [x] JWT tokens with 1-hour expiration
-- [x] Input validation on all endpoints (whitelist mode)
-- [x] File upload restricted to images only (jpg, png, gif) with 2MB limit
-- [x] CORS configured for specific origins
-- [x] Sensitive fields excluded from responses (`@Exclude()`)
-- [x] Role-based route protection
-- [x] Global exception filter with structured error logging
-- [x] Soft delete preserves data integrity — records are never physically deleted
-- [ ] Rate limiting (recommended for production)
-- [ ] Helmet.js headers (recommended for production)
-- [ ] HTTPS enforcement (required for production)
+- [x] Passwords hashed with bcrypt (10 salt rounds) / Şifreler bcrypt ile hashlenir
+- [x] JWT tokens with 1-hour expiration / JWT token'ları 1 saat süreli
+- [x] Input validation on all endpoints (whitelist mode) / Tüm uç noktalarda girdi doğrulama
+- [x] File upload restricted to images only (jpg, png, gif) with 2MB limit / Dosya yükleme yalnızca resimlerle sınırlı (maks 2MB)
+- [x] CORS configured for specific origins / CORS belirli kaynaklar için yapılandırılmış
+- [x] Sensitive fields excluded from responses (`@Exclude()`) / Hassas alanlar yanıtlardan gizlenir
+- [x] Role-based route protection / Rol tabanlı rota koruması
+- [x] Global exception filter with structured error logging / Yapılandırılmış hata günlüğü ile global hata filtresi
+- [x] Soft delete preserves data integrity / Yumuşak silme veri bütünlüğünü korur — kayıtlar asla fiziksel olarak silinmez
+- [ ] Rate limiting (recommended for production / üretim için önerilir)
+- [ ] Helmet.js headers (recommended for production / üretim için önerilir)
+- [ ] HTTPS enforcement (required for production / üretim için gerekli)
 
-### API Response Formats
+### API Response Formats / API Yanıt Formatları
 
-**Success Response (Post Listing)**
+**Success Response / Başarılı Yanıt (Post Listing / Yazı Listesi)**
 ```json
 {
   "data": [
@@ -476,7 +485,7 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 }
 ```
 
-**Error Response**
+**Error Response / Hata Yanıtı**
 ```json
 {
   "statusCode": 403,
@@ -489,19 +498,19 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contributing / Katkıda Bulunma
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork the repository / Repoyu fork'layın
+2. Create your feature branch / Özellik dalınızı oluşturun (`git checkout -b feature/amazing-feature`)
+3. Commit your changes / Değişikliklerinizi commit'leyin (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch / Dalınıza push'layın (`git push origin feature/amazing-feature`)
+5. Open a Pull Request / Pull Request açın
 
 ---
 
-## 📄 License
+## 📄 License / Lisans
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE). / Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
 
 ---
 
