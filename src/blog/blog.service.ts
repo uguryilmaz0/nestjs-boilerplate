@@ -22,6 +22,7 @@ export class BlogService {
     // 🛡️ Dinamik 'where' objesi oluşturma
     const where: any = {
       published: true, // Sadece yayınlanmış yazıları getir
+      deletedAt: null, // Sadece silinmemiş yazıları getir
     }
 
     // Eğer tag varsa ekle
@@ -33,11 +34,13 @@ export class BlogService {
       }
     }
 
-    // Eğer arama terimi varsa (Başlıkta VEYA İçerikte ara)
+    // Optimize edilmiş arama: PostgreSQL 'tsvector' kullanarak title ve content içinde arama yapıyoruz
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } }, // Başlıkta ara
-        { content: { contains: search, mode: 'insensitive' } }, // İçerikte ara
+        { title: { search: search.split(' ').join(' & ') } }, // PostgreSQL 'tsvector' kullanımı için
+        { content: { search: search.split(' ').join(' & ') } }, // PostgreSQL 'tsvector' kullanımı için
+        // Not: Eğer Prisma'da previewFeatures = ["fullTextSearchPostgres"] kapalıysa 
+        // mevcut 'contains' yapısı kalsın ama title ve content alanlarında index olduğundan emin ol. Bu bilgi schema.prisma dosyasında belirtilmelidir.
       ]
     }
 
@@ -71,7 +74,7 @@ export class BlogService {
   // Get a single post by ID
   async getPostById(postId: number) {
     const post = await this.prisma.post.findUnique({
-      where: { id: postId },
+      where: { id: postId, deletedAt: null }, // Silinmemiş yazıları getir
       include: {
         tags: true, // Etiketleri de Json içinden getir
         author: { // Yazar bilgileri
@@ -82,6 +85,7 @@ export class BlogService {
           }
         },
         comments: {
+          where: { deletedAt: null }, // Eğer yorumlarda da soft delete varsa
           include: {
             author: {
               select: {
@@ -187,14 +191,24 @@ export class BlogService {
   async deletePost(userId: number, postId: number) {
     // 1. Yazıyı bul ve yetki kontrolü yap
     const post = await this.prisma.post.findUnique({
-      where: { id: postId },
+      where: { id: postId, deletedAt: null },
     })
 
     if (!post || post.authorId !== userId) {
       throw new ForbiddenException('Bu yazıyı silme yetkiniz yok veya yazı bulunamadı.');
     }
 
-    // Veritabanından siliyoruz önce
+    // 2. Soft delete yaparak yazıyı silelim (deletedAt alanını doldurarak)
+    await this.prisma.post.update({
+      where: { id: postId },
+      data: { deletedAt: new Date() }, // Silindiği zamanı kaydet
+    })
+
+
+    /* Veritabanı ve fiziksel dosyayı tamamen silmek istersek bu fonskiyonu kullanabiliriz.
+
+    // Linkin Park < Faint > :) 
+
     const deletedPost = await this.prisma.post.delete({
       where: { id: postId },
     })
@@ -202,8 +216,8 @@ export class BlogService {
     // Eğer yazının bir resmi varsa fiziksel dosyayı da silelim
     if (deletedPost.image) {
       await this.deleteImageFile(deletedPost.image);
-    }
+    } */
 
-    return { message: 'Yazı başarıyla silindi.' };
+    return { message: 'Yazı başarıyla silindi (Soft delete).' };
   }
 }

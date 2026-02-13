@@ -20,13 +20,14 @@ enum Role {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  password String // Şifrelenmiş (hashed) halini tutacağız
-  name     String?
-  role     Role      @default(USER) // Varsayılan rol USER
-  posts    Post[] // Bir kullanıcının birden fazla yazısı olabilir
-  comments Comment[]
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String // Şifrelenmiş (hashed) halini tutacağız
+  name      String?
+  role      Role      @default(USER) // Varsayılan rol USER
+  posts     Post[] // Bir kullanıcının birden fazla yazısı olabilir
+  comments  Comment[]
+  deletedAt DateTime? // 🔥 Soft delete için ekledik
 }
 
 model Post {
@@ -39,9 +40,12 @@ model Post {
   createdAt DateTime @default(now())
   tags      Tag[]
 
-  author   User?     @relation(fields: [authorId], references: [id])
-  authorId Int?
-  comments Comment[]
+  author    User?     @relation(fields: [authorId], references: [id])
+  authorId  Int?
+  comments  Comment[]
+  deletedAt DateTime? // 🔥 Soft delete için ekledik
+
+  @@index([title, content]) // 🔥 Arama performansı için index ekledik
 }
 
 model Tag {
@@ -52,10 +56,11 @@ model Tag {
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        Int       @id @default(autoincrement())
   content   String // Yorumun içeriği
-  createdAt DateTime @default(now()) // Yorumun oluşturulma zamanı
-  updatedAt DateTime @updatedAt // Yorumun güncellenme zamanı
+  createdAt DateTime  @default(now()) // Yorumun oluşturulma zamanı
+  updatedAt DateTime  @updatedAt // Yorumun güncellenme zamanı
+  deletedAt DateTime? // 🔥 Soft delete için ekledik
 
   // 🔗 İLİŞKİLER
   // Yorumu yapan kullanıcı ile bağlantı
