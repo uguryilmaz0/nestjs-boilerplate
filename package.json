@@ -1,6 +1,6 @@
 {
   "name": "nestjs-boilerplate",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
