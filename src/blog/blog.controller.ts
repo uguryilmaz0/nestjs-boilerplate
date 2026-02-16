@@ -60,10 +60,11 @@ export class BlogController {
   @Patch(':id')
   update(
     @GetUser('id') userId: number,
+    @GetUser('role') userRole: string,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePostsDto,
   ) {
-    return this.blogService.updatePost(userId, id, dto);
+    return this.blogService.updatePost(userId, userRole, id, dto);
   }
 
   @ApiOperation({ summary: 'Yazıyı sil / Delete a post (Admin/Author)' })
@@ -74,8 +75,8 @@ export class BlogController {
   @UseGuards(JwtGuard, RolesGuard)
   @Delete(':id')
   @Roles(Role.ADMIN, Role.AUTHOR)
-  delete(@GetUser('id') userId: number, @Param('id', ParseIntPipe) id: number) {
-    return this.blogService.deletePost(userId, id);
+  delete(@GetUser('id') userId: number, @GetUser('role') userRole: string, @Param('id', ParseIntPipe) id: number) {
+    return this.blogService.deletePost(userId, userRole, id);
   }
 
   @ApiOperation({ summary: 'Resim yükle / Upload image (max 2MB, jpg/png/gif)' })

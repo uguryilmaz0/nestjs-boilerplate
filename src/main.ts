@@ -3,8 +3,8 @@ import { AppModule } from './app.module';
 import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
   // NestJS Logger — Yapılandırılmış log çıktısı sağlar
@@ -16,6 +16,9 @@ async function bootstrap() {
   // Tüm endpoint'lerin başına /api ekler (Örn: /api/blog)
   // Prepends /api to all endpoints (e.g., /api/blog)
   app.setGlobalPrefix('api');
+
+  // 🛡️ 1. SECURITY MIDDLEWARE — Helmet
+  app.use(helmet()); // Güvenlik başlıkları ekler / Adds security headers
 
   // 🌍 1. CORS — Cross-Origin Resource Sharing
   // İzin verilen frontend origin'lerini tanımlar
@@ -30,6 +33,9 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
+  // Uygulama kapanırken temizlik yapar / Enables cleanup on app shutdown
+  app.enableShutdownHooks();
 
   // 📝 2. VALIDATION PIPE
   // Gelen isteklerdeki DTO doğrulamasını global olarak aktifleştirir
@@ -49,7 +55,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('NestJS Boilerplate API')
     .setDescription('Production-ready backend infrastructure built with NestJS + Prisma + PostgreSQL.')
-    .setVersion('1.2.0')
+    .setVersion('1.3.0')
     .addBearerAuth() // JWT token girişi için Swagger'a kilit ikonu ekler / Adds lock icon for JWT auth
     .build();
 

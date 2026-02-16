@@ -1,21 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
     private s3Client: S3Client;
+    private readonly bucketName;
+    private readonly region;
+    private readonly endpoint;
 
-    constructor() {
+    constructor(private configService: ConfigService) {
+        // Ortam değişkenlerinden S3 bilgilerini al / Get S3 config from environment
+        this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME')!;
+        this.region = this.configService.get<string>('AWS_S3_REGION')!;
+        this.endpoint = this.configService.get<string>('AWS_S3_ENDPOINT');
+
         this.s3Client = new S3Client({
-            region: process.env.AWS_S3_REGION,
+            region: this.region,
             // Özel endpoint varsa kullan (MinIO/Supabase), yoksa AWS / Use custom endpoint if set, otherwise AWS
-            endpoint: process.env.AWS_S3_ENDPOINT || undefined,
+            endpoint: this.endpoint,
             forcePathStyle: true, // S3 uyumlu sağlayıcılar için gerekli / Required for S3-compatible providers
             credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID || '-',
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '-',
+                accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID')!, // Access key from environment 
+                secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY')! // Secret key from environment
             }
-        })
+        });
     }
 
     // S3'e dosya yükle / Upload a file to S3
@@ -24,16 +33,16 @@ export class S3Service {
         const key = `${Date.now()}-${file.originalname.replace(/\s/g, '-')}`;
 
         await this.s3Client.send(new PutObjectCommand({
-            Bucket: process.env.AWS_S3_BUCKET_NAME!,
+            Bucket: this.bucketName,
             Key: key,
             Body: file.buffer,
             ContentType: file.mimetype,
         }))
 
         // Özel endpoint varsa URL'yi buna göre oluştur / Build URL based on custom endpoint
-        const baseUrl = process.env.AWS_S3_ENDPOINT ?
-            `${process.env.AWS_S3_ENDPOINT}/${process.env.AWS_S3_BUCKET_NAME}` :
-            `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com`;
+        const baseUrl = this.endpoint ?
+            `${this.endpoint}/${this.bucketName}` :
+            `https://${this.bucketName}.s3.${this.region}.amazonaws.com`;
 
         return `${baseUrl}/${key}`;
     }
@@ -43,7 +52,7 @@ export class S3Service {
         if (!fileUrl) return; // URL yoksa işlem yapma / Skip if no URL
         const key = fileUrl.split('/').pop(); // URL'nin son segmenti dosya adı / Last URL segment is the file key
         await this.s3Client.send(new DeleteObjectCommand({
-            Bucket: process.env.AWS_S3_BUCKET_NAME,
+            Bucket: this.bucketName,
             Key: key,
         }))
     }

@@ -5,6 +5,8 @@ import { UpdatePostsDto } from './dto/update-post.dto';
 import { GetPostsQueryDto } from './dto/get-posts-query.dto';
 import slugify from 'slugify';
 import { S3Service } from 'src/common/services/s3.service';
+import { randomUUID } from 'crypto';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class BlogService {
@@ -112,7 +114,7 @@ export class BlogService {
         published: dto.published || false,
         authorId: userId, // JWT'den gelen kullanıcı / User from JWT
         // Çakışma önleme: rastgele son ek / Collision prevention: random suffix
-        slug: `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`,
+        slug: `${baseSlug}-${randomUUID().split('-')[0]}`, // "hello-world-1a2b3c"
         tags: {
           // Etiketleri bul veya oluştur / Find or create tags
           connectOrCreate: (dto.tags || []).map((tag) => {
@@ -131,13 +133,16 @@ export class BlogService {
   }
 
   // Yazıyı güncelle (kısmi) / Update a post (partial)
-  async updatePost(userId: number, postId: number, dto: UpdatePostsDto) {
+  async updatePost(userId: number, userRole: string, postId: number, dto: UpdatePostsDto) {
     // 1. Yazı varlığı ve sahiplik kontrolü / Check post existence & ownership
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
     })
 
-    if (!post || post.authorId !== userId) {
+    const isOwner = post?.authorId === userId;
+    const isAdmin = userRole === Role.ADMIN;
+
+    if (!post || (!isOwner && !isAdmin)) {
       throw new ForbiddenException('Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı. / Not authorized or post not found.');
     }
 
@@ -166,13 +171,16 @@ export class BlogService {
   }
 
   // Yazıyı sil (soft delete) / Delete a post (soft delete)
-  async deletePost(userId: number, postId: number) {
+  async deletePost(userId: number, userRole: string, postId: number) {
     // 1. Yazıyı bul ve yetki kontrolü / Find post & check ownership
     const post = await this.prisma.post.findUnique({
       where: { id: postId, deletedAt: null },
     })
 
-    if (!post || post.authorId !== userId) {
+    const isOwner = post?.authorId === userId;
+    const isAdmin = userRole === Role.ADMIN;
+
+    if (!post || (!isOwner && !isAdmin)) {
       throw new ForbiddenException('Bu yazıyı silme yetkiniz yok veya yazı bulunamadı. / Not authorized or post not found.');
     }
 
