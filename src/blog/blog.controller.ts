@@ -10,6 +10,7 @@ import { GetPostsQueryDto } from './dto/get-posts-query.dto';
 import { Role } from '@prisma/client';
 import { Roles } from 'src/auth/decorator/roles-decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -44,7 +45,7 @@ export class BlogController {
   @ApiBearerAuth()
   @ApiResponse({ status: 201, description: 'Yazı başarıyla oluşturuldu / Post created successfully' })
   @ApiResponse({ status: 401, description: 'Yetkisiz — JWT token gerekli / Unauthorized — JWT required' })
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Post('create')
   async createPost(@GetUser('id') userId: number, @Body() dto: CreatePostsDto) {
     return this.blogService.createPost(userId, dto);
@@ -55,7 +56,7 @@ export class BlogController {
   @ApiParam({ name: 'id', description: 'Güncellenecek yazı ID / Post ID to update', example: 1 })
   @ApiResponse({ status: 200, description: 'Yazı güncellendi / Post updated' })
   @ApiResponse({ status: 403, description: 'Yetki hatası veya yazı bulunamadı / Not authorized or post not found' })
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Patch(':id')
   update(
     @GetUser('id') userId: number,
@@ -70,7 +71,7 @@ export class BlogController {
   @ApiParam({ name: 'id', description: 'Silinecek yazı ID / Post ID to delete', example: 1 })
   @ApiResponse({ status: 200, description: 'Yazı silindi / Post deleted (soft delete)' })
   @ApiResponse({ status: 403, description: 'Yetki hatası veya yazı bulunamadı / Not authorized or post not found' })
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Delete(':id')
   @Roles(Role.ADMIN, Role.AUTHOR)
   delete(@GetUser('id') userId: number, @Param('id', ParseIntPipe) id: number) {
@@ -90,7 +91,7 @@ export class BlogController {
   })
   @ApiResponse({ status: 201, description: 'Resim yüklendi — URL döner / Image uploaded — returns URL' })
   @ApiResponse({ status: 400, description: 'Geçersiz dosya tipi veya boyut aşımı / Invalid file type or size exceeded' })
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Post('upload')
   @UseInterceptors(FileInterceptor('image'))
   async uploadImage(

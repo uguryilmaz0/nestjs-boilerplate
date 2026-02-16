@@ -17,6 +17,11 @@ export class RolesGuard implements CanActivate {
 
         const { user } = context.switchToHttp().getRequest();
 
+        if (!user) {
+            return false; // Kullanıcı yoksa erişimi reddet / Deny if no user 
+            // NestJS bunu otomatik olarak 403 Forbidden'a çevirir / NestJS will automatically convert this to 403 Forbidden
+        }
+
         return requiredRoles.includes(user.role); // Kullanıcı rolü uyuyor mu? / Does user role match?
     }
 }
