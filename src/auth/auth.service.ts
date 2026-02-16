@@ -43,6 +43,7 @@ export class AuthService {
           throw new ForbiddenException('Bu e-posta adresi zaten kullanılmaktadır. / This email is already in use.');
         }
       }
+      throw error;
     }
   }
 
