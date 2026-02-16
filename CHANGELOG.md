@@ -7,6 +7,44 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ---
 
+## [1.3.0] — 2026-02-16
+
+### Added / Eklenenler
+- **Rate limiting** with `@nestjs/throttler` — 100 requests per IP per minute, applied globally via `ThrottlerGuard`
+  `@nestjs/throttler` ile hız sınırlama — IP başına dakikada 100 istek, `ThrottlerGuard` ile global uygulandı
+- **Helmet.js** security middleware — sets HTTP security headers (XSS, HSTS, etc.)
+  Helmet.js güvenlik middleware'i — HTTP güvenlik başlıklarını ayarlar (XSS, HSTS vb.)
+- **Graceful shutdown hooks** — `app.enableShutdownHooks()` for clean resource release on exit
+  Zarif kapanma kancaları — çıkışta temiz kaynak serbest bırakma
+- **PrismaService `onModuleDestroy`** — automatic database disconnection on shutdown
+  Kapanışta otomatik veritabanı bağlantı kesme
+- **Admin ownership override** — `ADMIN` role can now update/delete any post regardless of ownership
+  Admin sahiplik geçersiz kılma — `ADMIN` rolü sahiplik fark etmeksizin tüm yazıları güncelleyip silebilir
+
+### Changed / Değişenler
+- **S3Service** fully refactored to use `ConfigService` instead of `process.env` — cloud-agnostic (AWS / MinIO / Supabase)
+  S3Service tamamen `ConfigService` kullanacak şekilde refactor edildi — bulut bağımsız
+- **JwtStrategy** refactored to use `ConfigService` — removed fallback `|| '-'` on `JWT_SECRET`
+  JwtStrategy `ConfigService` kullanacak şekilde refactor edildi — `JWT_SECRET` için fallback kaldırıldı
+- **RolesGuard** now checks for null user before role comparison (returns `403` if no user)
+  RolesGuard artık rol karşılaştırmasından önce null kullanıcı kontrolü yapar
+- **BlogController** — `RolesGuard` activated on all protected endpoints (create, update, delete, upload)
+  BlogController — tüm korumalı endpoint'lerde `RolesGuard` aktifleştirildi
+- **Slug generation** switched from `Math.random()` to `crypto.randomUUID()` for better collision resistance
+  Slug üretimi daha iyi çakışma direnci için `crypto.randomUUID()` kullanacak şekilde değiştirildi
+- **JwtStrategy** now throws `UnauthorizedException` for deleted or missing users
+  JwtStrategy artık silinmiş veya bulunamayan kullanıcılar için `UnauthorizedException` fırlatır
+- **Swagger version** updated to `1.3.0`
+  Swagger versiyonu `1.3.0` olarak güncellendi
+
+### Security / Güvenlik
+- Helmet.js HTTP başlıkları aktif / Helmet.js HTTP headers active
+- Rate limiting global olarak uygulandı / Rate limiting applied globally
+- JWT strategy artık `process.env` yerine `ConfigService` kullanıyor / JWT strategy now uses `ConfigService` instead of `process.env`
+- Silinmiş kullanıcı token'ları reddediliyor / Deleted user tokens are rejected
+
+---
+
 ## [1.2.0] — 2026-02-14
 
 ### Added / Eklenenler
@@ -28,7 +66,7 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
   Swagger versiyonu `1.2.0` olarak güncellendi
 - **Logger messages** converted to English for production compatibility
   Logger mesajları üretim uyumluluğu için İngilizceye çevrildi
-- Removed emoji prefixes (`���`, `���`, `❌`) from code comments
+- Removed emoji prefixes (`���`, `���`, `❌`) from code comments
   Kod yorumlarından emoji ön ekleri kaldırıldı
 
 ---

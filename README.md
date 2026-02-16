@@ -5,7 +5,7 @@
 <h1 align="center">NestJS Boilerplate</h1>
 
 <p align="center">
-  <strong>Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, S3 file uploads, soft delete, full-text search, and Swagger documentation.</strong>
+  <strong>Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, rate limiting, Helmet security, S3 file uploads, soft delete, full-text search, and Swagger documentation.</strong>
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
-> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, S3 dosya yükleme, soft delete, tam metin arama ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
+> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, hız sınırlama, Helmet güvenlik başlıkları, S3 dosya yükleme, soft delete, tam metin arama ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
 
 ---
 
@@ -51,7 +51,7 @@
 Key design decisions / Temel tasarım kararları:
 - **Modular architecture / Modüler mimari** — each domain (Auth, Blog, Comment) is a self-contained module / her alan kendi içinde bağımsız bir modüldür
 - **Database-first approach / Veritabanı öncelikli yaklaşım** — Prisma ORM with migration history for safe schema evolution / güvenli şema evrimi için migration geçmişi
-- **Security by default / Varsayılan güvenlik** — JWT authentication, RBAC, input validation, and exception filtering out of the box / JWT, RBAC, girdi doğrulama ve hata filtreleme hazır olarak gelir
+- **Security by default / Varsayılan güvenlik** — JWT authentication, RBAC, rate limiting, Helmet headers, input validation, and exception filtering out of the box / JWT, RBAC, hız sınırlama, Helmet başlıkları, girdi doğrulama ve hata filtreleme hazır olarak gelir
 
 ---
 
@@ -62,11 +62,11 @@ Client Request
      │
      ▼
 ┌─────────────────────────────────────────────────────────┐
-│  Global Middleware Layer                                 │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐  │
-│  │ CORS Policy  │  │ Validation   │  │ Serialization  │  │
-│  │              │  │ Pipe         │  │ Interceptor    │  │
-│  └─────────────┘  └──────────────┘  └────────────────┘  │
+│  Global Middleware & Guards Layer                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐  │
+│  │ Helmet   │ │ CORS     │ │ Throttle │ │ Validation │  │
+│  │ Headers  │ │ Policy   │ │ Guard    │ │ Pipe       │  │
+│  └──────────┘ └──────────┘ └──────────┘ └────────────┘  │
 └────────────────────────┬────────────────────────────────┘
                          │
      ┌───────────────────┼───────────────────┐
@@ -129,10 +129,14 @@ Client Request
 
 | Feature / Özellik | Description / Açıklama |
 |---------|-------------|
+| Rate Limiting / Hız Sınırlama | `@nestjs/throttler` — 100 requests per IP per minute / IP başına dakikada 100 istek |
+| Helmet.js Security Headers / Güvenlik Başlıkları | XSS protection, HSTS, content-type sniffing prevention and more / XSS koruması, HSTS ve daha fazlası |
 | Global Validation / Global Doğrulama | `ValidationPipe` with whitelist & forbidNonWhitelisted / Beyaz liste modunda doğrulama |
 | Exception Filter / Hata Filtresi | Standardized error response format with logging / Yapılandırılmış hata yanıt formatı |
 | CORS Configuration / CORS Yapılandırması | Pre-configured for common frontend ports / Yaygın frontend portları için önceden yapılandırılmış |
 | Soft Delete / Yumuşak Silme | `deletedAt` field on User, Post, Comment — records are never physically deleted / Kayıtlar asla fiziksel olarak silinmez |
+| Admin Ownership Override / Admin Sahiplik Geçersiz Kılma | Admins can update/delete any post regardless of ownership / Adminler sahiplik fark etmeksizin tüm yazıları yönetebilir |
+| Graceful Shutdown / Zarif Kapanma | Proper cleanup of database connections and resources on exit / Çıkışta veritabanı bağlantılarının düzgün kapatılması |
 | Swagger Documentation / Swagger Dokümantasyonu | Interactive API docs at `/api/docs` / `/api/docs` adresinde interaktif API belgeleri |
 
 ---
@@ -150,6 +154,7 @@ Client Request
 | **Validation** | class-validator + class-transformer |
 | **Documentation** | Swagger / OpenAPI (`@nestjs/swagger`) |
 | **File Upload** | Multer + AWS S3 SDK (S3 / MinIO / Supabase compatible) |
+| **Security** | Helmet, @nestjs/throttler |
 | **SEO** | slugify |
 | **Infrastructure** | Docker Compose (PostgreSQL + MinIO) |
 
@@ -203,7 +208,7 @@ npm run start:dev
 ```
 src/
 ├── main.ts                          # Application bootstrap & global setup
-├── app.module.ts                    # Root module
+├── app.module.ts                    # Root module (Throttler, ConfigModule)
 ├── app.service.ts                   # Root service
 │
 ├── auth/                            # 🔐 Authentication Module
@@ -279,8 +284,8 @@ docker-compose.yml                   # PostgreSQL + MinIO
 | `GET` | `/blog/search?q=term` | ❌ | Full-text search / Tam metin arama |
 | `GET` | `/blog/:id` | ❌ | Get post with comments / Yazı detayı |
 | `POST` | `/blog/create` | 🔒 JWT | Create post / Yazı oluştur |
-| `PATCH` | `/blog/:id` | 🔒 JWT | Update post / Yazı güncelle |
-| `DELETE` | `/blog/:id` | 🔒 JWT + Role | Soft delete post / Yazı sil |
+| `PATCH` | `/blog/:id` | 🔒 JWT + Role | Update post (owner or admin) / Yazı güncelle (sahip veya admin) |
+| `DELETE` | `/blog/:id` | 🔒 JWT + Role | Soft delete post (owner or admin) / Yazı sil (sahip veya admin) |
 | `POST` | `/blog/upload` | 🔒 JWT | Upload image to S3 / Resim yükle |
 
 ### Comment (`/api/comment`)
@@ -456,8 +461,10 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 - [x] Role-based route protection / Rol tabanlı rota koruması
 - [x] Global exception filter with structured error logging / Yapılandırılmış hata günlüğü ile global hata filtresi
 - [x] Soft delete preserves data integrity / Yumuşak silme veri bütünlüğünü korur — kayıtlar asla fiziksel olarak silinmez
-- [ ] Rate limiting (recommended for production / üretim için önerilir)
-- [ ] Helmet.js headers (recommended for production / üretim için önerilir)
+- [x] Rate limiting with `@nestjs/throttler` (100 req/min per IP) / `@nestjs/throttler` ile hız sınırlama
+- [x] Helmet.js HTTP security headers / Helmet.js HTTP güvenlik başlıkları
+- [x] Graceful shutdown with database cleanup / Veritabanı temizliğiyle zarif kapanma
+- [x] Cloud-agnostic S3 via `ConfigService` (no `process.env`) / `ConfigService` ile bulut bağımsız S3
 - [ ] HTTPS enforcement (required for production / üretim için gerekli)
 
 ### API Response Formats / API Yanıt Formatları
