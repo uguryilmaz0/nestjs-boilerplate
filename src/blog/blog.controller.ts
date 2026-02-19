@@ -25,6 +25,15 @@ export class BlogController {
     return this.blogService.getPosts({ search: q, page: 1, limit: 10 });
   }
 
+  // Bu endpoint, global exception filter'ımızın ham hataları nasıl yakaladığını test etmek için eklendi.
+  // This endpoint is added to test how our global exception filter catches raw errors.
+  @Get('error-test')
+  testError() {
+    // Bu ham bir JavaScript hatasıdır, NestJS hatası değildir. / This is a raw JavaScript error, not a NestJS error.
+    // Filtremiz bunu yakalayıp 500 status koduna çevirmeli. / Our filter should catch this and convert it to a 500 status code.
+    throw new Error('Sistem çöktü! / System crashed!');
+  }
+
   @ApiOperation({ summary: 'Tüm yazıları listele / List all posts (pagination, search, tag filter)' })
   @ApiResponse({ status: 200, description: 'Yazı listesi ve meta bilgileri / Post list with metadata' })
   @Get()

@@ -5,7 +5,7 @@
 <h1 align="center">NestJS Boilerplate</h1>
 
 <p align="center">
-  <strong>Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, rate limiting, Helmet security, S3 file uploads, soft delete, full-text search, and Swagger documentation.</strong>
+  <strong>Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, rate limiting, Helmet security, Winston structured logging, S3 file uploads, soft delete, full-text search, and Swagger documentation.</strong>
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
-> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, hız sınırlama, Helmet güvenlik başlıkları, S3 dosya yükleme, soft delete, tam metin arama ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
+> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, hız sınırlama, Helmet güvenlik başlıkları, Winston yapılandırılmış loglama, S3 dosya yükleme, soft delete, tam metin arama ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
 
 ---
 
@@ -52,6 +52,7 @@ Key design decisions / Temel tasarım kararları:
 - **Modular architecture / Modüler mimari** — each domain (Auth, Blog, Comment) is a self-contained module / her alan kendi içinde bağımsız bir modüldür
 - **Database-first approach / Veritabanı öncelikli yaklaşım** — Prisma ORM with migration history for safe schema evolution / güvenli şema evrimi için migration geçmişi
 - **Security by default / Varsayılan güvenlik** — JWT authentication, RBAC, rate limiting, Helmet headers, input validation, and exception filtering out of the box / JWT, RBAC, hız sınırlama, Helmet başlıkları, girdi doğrulama ve hata filtreleme hazır olarak gelir
+- **Observability / Gözlemlenebilirlik** — Winston structured logging with daily-rotating log files, HTTP request logging interceptor, and environment validation at startup / Winston yapılandırılmış loglama, HTTP istek loglama ve başlangıçta ortam doğrulama
 
 ---
 
@@ -125,6 +126,16 @@ Client Request
 | Cascade Delete / Kademeli Silme | Comments auto-deleted when parent post is removed / Yazı silindiğinde yorumlar otomatik silinir |
 | Author Association / Yazar İlişkilendirme | Each comment linked to authenticated user / Her yorum kimliği doğrulanmış kullanıcıya bağlı |
 
+### � Observability / Gözlemlenebilirlik
+
+| Feature / Özellik | Description / Açıklama |
+|---------|-------------|
+| Winston Logging / Winston Loglama | Structured logging with `nest-winston` — colorful console in dev, JSON in production / Geliştirmede renkli konsol, üretimde JSON formatında yapılandırılmış loglama |
+| Daily Rotating Log Files / Günlük Dönen Log Dosyaları | `logs/error-%DATE%.log` (14-day retention) + `logs/combined-%DATE%.log` (30-day retention) with gzip compression / Hata logları (14 gün) ve birleşik loglar (30 gün), gzip sıkıştırma ile |
+| HTTP Request Logging / HTTP İstek Loglama | Global `LoggingInterceptor` — logs method, URL, status, duration, IP for every request / Her istek için metod, URL, durum, süre ve IP loglar |
+| Environment Validation / Ortam Doğrulama | Startup-time validation of `NODE_ENV`, `PORT`, `DATABASE_URL` via `class-validator` / Başlangıçta ortam değişkenlerini doğrular |
+| Conditional Swagger / Koşullu Swagger | Swagger docs automatically disabled in production / Swagger üretim ortamında otomatik devre dışı |
+
 ### 🛡 Security & Quality / Güvenlik & Kalite
 
 | Feature / Özellik | Description / Açıklama |
@@ -132,12 +143,12 @@ Client Request
 | Rate Limiting / Hız Sınırlama | `@nestjs/throttler` — 100 requests per IP per minute / IP başına dakikada 100 istek |
 | Helmet.js Security Headers / Güvenlik Başlıkları | XSS protection, HSTS, content-type sniffing prevention and more / XSS koruması, HSTS ve daha fazlası |
 | Global Validation / Global Doğrulama | `ValidationPipe` with whitelist & forbidNonWhitelisted / Beyaz liste modunda doğrulama |
-| Exception Filter / Hata Filtresi | Standardized error response format with logging / Yapılandırılmış hata yanıt formatı |
-| CORS Configuration / CORS Yapılandırması | Pre-configured for common frontend ports / Yaygın frontend portları için önceden yapılandırılmış |
+| Exception Filter / Hata Filtresi | Catches **all** exceptions (not just `HttpException`); severity-based logging with stack traces in dev / Tüm hataları yakalar; ciddiyete dayalı loglama ve geliştirmede stack trace |
+| CORS Configuration / CORS Yapılandırması | Pre-configured with `origin: true` (customize for production) / `origin: true` ile yapılandırılmış (üretim için özelleştirin) |
 | Soft Delete / Yumuşak Silme | `deletedAt` field on User, Post, Comment — records are never physically deleted / Kayıtlar asla fiziksel olarak silinmez |
 | Admin Ownership Override / Admin Sahiplik Geçersiz Kılma | Admins can update/delete any post regardless of ownership / Adminler sahiplik fark etmeksizin tüm yazıları yönetebilir |
 | Graceful Shutdown / Zarif Kapanma | Proper cleanup of database connections and resources on exit / Çıkışta veritabanı bağlantılarının düzgün kapatılması |
-| Swagger Documentation / Swagger Dokümantasyonu | Interactive API docs at `/api/docs` / `/api/docs` adresinde interaktif API belgeleri |
+| Swagger Documentation / Swagger Dokümantasyonu | Interactive API docs at `/api/docs` (disabled in production) / `/api/docs` adresinde interaktif API belgeleri (üretimde devre dışı) |
 
 ---
 
@@ -155,6 +166,7 @@ Client Request
 | **Documentation** | Swagger / OpenAPI (`@nestjs/swagger`) |
 | **File Upload** | Multer + AWS S3 SDK (S3 / MinIO / Supabase compatible) |
 | **Security** | Helmet, @nestjs/throttler |
+| **Logging** | Winston + nest-winston + winston-daily-rotate-file |
 | **SEO** | slugify |
 | **Infrastructure** | Docker Compose (PostgreSQL + MinIO) |
 
@@ -207,7 +219,7 @@ npm run start:dev
 
 ```
 src/
-├── main.ts                          # Application bootstrap & global setup
+├── main.ts                          # Application bootstrap (Winston, Swagger, CORS)
 ├── app.module.ts                    # Root module (Throttler, ConfigModule)
 ├── app.service.ts                   # Root service
 │
@@ -246,8 +258,15 @@ src/
 │       └── create-comment.dto.ts    # Comment validation schema
 │
 ├── common/                          # 🧩 Shared Utilities
+│   ├── configs/
+│   │   ├── env.validation.ts        # Startup env validation (NODE_ENV, PORT, DB)
+│   │   └── logger.config.ts         # Winston logger configuration
+│   ├── enums/
+│   │   └── environment.enum.ts      # Environment enum (dev/prod/test/staging)
 │   ├── filters/
-│   │   └── http-exception.filter.ts # Global exception filter
+│   │   └── http-exception.filter.ts # Global exception filter (catches all errors)
+│   ├── interceptors/
+│   │   └── logging.interceptor.ts   # HTTP request logging interceptor
 │   ├── services/
 │   │   └── s3.service.ts            # S3-compatible upload service
 │   └── validators/
@@ -262,6 +281,9 @@ prisma/
 └── migrations/                      # Migration history
 
 docker-compose.yml                   # PostgreSQL + MinIO
+logs/                                # Winston log output directory
+  ├── error-YYYY-MM-DD.log           #   Error-level logs (14-day retention)
+  └── combined-YYYY-MM-DD.log        #   All logs (30-day retention)
 ```
 
 ---
@@ -409,6 +431,9 @@ docker-compose down     # Stop / Durdur
 Create a `.env` file in the project root: / Proje kök dizininde bir `.env` dosyası oluşturun:
 
 ```env
+# Environment (development | production | test | staging)
+NODE_ENV=development
+
 # Database
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 
@@ -465,6 +490,13 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 - [x] Helmet.js HTTP security headers / Helmet.js HTTP güvenlik başlıkları
 - [x] Graceful shutdown with database cleanup / Veritabanı temizliğiyle zarif kapanma
 - [x] Cloud-agnostic S3 via `ConfigService` (no `process.env`) / `ConfigService` ile bulut bağımsız S3
+- [x] Winston structured logging with daily-rotating log files / Winston yapılandırılmış loglama ve günlük dönen log dosyaları
+- [x] HTTP request logging (method, URL, status, duration, IP) / HTTP istek loglama
+- [x] Global exception filter catches all errors (not just `HttpException`) / Global hata filtresi tüm hataları yakalar
+- [x] Severity-based error logging (5xx → error + stack, 4xx → warn) / Ciddiyete dayalı hata loglama
+- [x] Stack traces hidden in production responses / Üretim yanıtlarında stack trace gizlenir
+- [x] Swagger automatically disabled in production / Swagger üretimde otomatik devre dışı
+- [x] Startup environment validation (`NODE_ENV`, `PORT`, `DATABASE_URL`) / Başlangıç ortam doğrulaması
 - [ ] HTTPS enforcement (required for production / üretim için gerekli)
 
 ### API Response Formats / API Yanıt Formatları
@@ -495,11 +527,11 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 **Error Response / Hata Yanıtı**
 ```json
 {
+  "success": false,
   "statusCode": 403,
   "timestamp": "2026-02-11T18:30:00.000Z",
   "path": "/api/blog/5",
-  "message": "Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı.",
-  "project": "NestJS Boilerplate"
+  "message": "Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı."
 }
 ```
 

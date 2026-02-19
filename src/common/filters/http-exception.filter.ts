@@ -4,51 +4,60 @@ import {
   ArgumentsHost,
   HttpException,
   Logger,
-} from '@nestjs/common'; // NestJS çekirdek dekoratörleri / NestJS core decorators
-import { Request, Response } from 'express'; // Express tipleri / Express types
+  HttpStatus,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
 
-// Hata mesajı objesi yapısı / Exception response structure
-interface IExceptionResponse {
-  statusCode: number;
-  message: string | string[]; // Tek mesaj veya dizi (ValidationPipe) / Single or array (ValidationPipe)
-  error: string;
-}
-
-@Catch(HttpException) // Sadece HttpException türünü yakala / Catch only HttpException types
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  // NestJS logger / Built-in NestJS logger
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+  private readonly logger = new Logger('HttpExceptionFilter');
 
-  // host: Mevcut bağlama erişim sağlar / Provides access to the current execution context
-  catch(exception: HttpException, host: ArgumentsHost) {
-    const ctx = host.switchToHttp(); // HTTP bağlamına geç / Switch to HTTP context
+  // ÖNEMLİ: Tipini 'unknown' yapıyoruz çünkü her türlü hata gelebilir / IMPORTANT: We set the type to 'unknown' because any kind of error can come in
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    // HTTP durum kodu / HTTP status code
-    const status = exception.getStatus();
+    // 1. Durum kodunu belirle (exception.getStatus() kullanılmalı!) / Determine the status code (should use exception.getStatus())
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    // Hatanın detaylı içeriği / Detailed exception content
-    const exceptionResponse = exception.getResponse();
+    // 2. Mesajı ayıkla
+    let message: string | string[] = 'Internal server error';
 
-    // Mesajı tip-güvenli ayıkla / Parse message in a type-safe way
-    const message =
-      typeof exceptionResponse === 'object'
-        ? (exceptionResponse as IExceptionResponse).message
-        : exceptionResponse;
+    if (exception instanceof HttpException) {
+      const exceptionRes = exception.getResponse();
+      message = typeof exceptionRes === 'object'
+        ? (exceptionRes as any).message
+        : exceptionRes;
+    } else if (exception instanceof Error) {
+      message = exception.message;
+    }
 
-    // Hata logla / Log the error
-    this.logger.error(
-      `Error: ${status} | Path: ${request.url} | Message: ${JSON.stringify(message)}`,
-    );
+    // 3. Loglama (Artık 'status' bir number olduğu için >= hatası vermez) / Logging (Since 'status' is now a number, it won't give an error for >=)
+    const logMessage = `Error: ${status} | Path: ${request.url} | Message: ${JSON.stringify(message)}`;
 
-    // Standart JSON hata yanıtı / Standardized JSON error response
+    if (status >= 500) {
+      this.logger.error(
+        logMessage,
+        exception instanceof Error ? exception.stack : 'No stack trace available',
+      );
+    } else {
+      this.logger.warn(logMessage);
+    }
+
+    // 4. Yanıt Gönder / Send Response
     response.status(status).json({
+      success: false,
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       message: message,
-      project: 'NestJS Boilerplate',
+      ...(process.env.NODE_ENV !== 'production' && status >= 500
+        ? { stack: exception instanceof Error ? exception.stack : null }
+        : {}),
     });
   }
 }
