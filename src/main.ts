@@ -5,79 +5,97 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { WinstonModule } from 'nest-winston';
+import { getLoggerConfig } from './common/configs/logger.config';
+import { ConfigService } from '@nestjs/config';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
+/**
+ * Uygulama Başlatma Fonksiyonu
+ * Application Bootstrap Function
+ */
 async function bootstrap() {
-  // NestJS Logger — Yapılandırılmış log çıktısı sağlar
-  // NestJS Logger — Provides structured logging output
+  /**
+   * 1. Logger'ı en erken aşamada başlatmak için ham NODE_ENV değerini alıyoruz.
+   * To initialize Logger at the earliest stage, we get the raw NODE_ENV value.
+   */
+  const rawNodeEnv = process.env.NODE_ENV || 'development';
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    // Winston Logger entegrasyonu / Winston Logger integration
+    logger: WinstonModule.createLogger(getLoggerConfig(rawNodeEnv)),
+  });
+
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configService = app.get(ConfigService);
 
   // 🏁 GLOBAL API PREFIX
-  // Tüm endpoint'lerin başına /api ekler (Örn: /api/blog)
-  // Prepends /api to all endpoints (e.g., /api/blog)
+  // Tüm endpoint'lerin başına /api ekler / Prepends /api to all endpoints
   app.setGlobalPrefix('api');
 
-  // 🛡️ 1. SECURITY MIDDLEWARE — Helmet
-  app.use(helmet()); // Güvenlik başlıkları ekler / Adds security headers
+  // 🛡️ SECURITY MIDDLEWARE — Helmet
+  // HTTP başlıklarını güvenli hale getirir / Secures HTTP headers
+  app.use(helmet());
 
-  // 🌍 1. CORS — Cross-Origin Resource Sharing
-  // İzin verilen frontend origin'lerini tanımlar
-  // Defines allowed frontend origins
+  // 🌍 CORS — Cross-Origin Resource Sharing
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://localhost:4200',
-      'http://localhost:8080',
-    ],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: true, // Üretimde spesifik bir liste ile değiştirilmelidir / Should be replaced with a specific list in production
     credentials: true,
   });
 
-  // Uygulama kapanırken temizlik yapar / Enables cleanup on app shutdown
+  // Uygulama kapanırken açık bağlantıları temizler / Enables cleanup on app shutdown
   app.enableShutdownHooks();
 
-  // 📝 2. VALIDATION PIPE
-  // Gelen isteklerdeki DTO doğrulamasını global olarak aktifleştirir
-  // Enables global DTO validation for incoming requests
+  // 📝 VALIDATION PIPE
+  // Gelen verileri DTO kurallarına göre denetler / Validates incoming data against DTO rules
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,            // DTO'da tanımlı olmayan alanları siler / Strips unknown properties
-      forbidNonWhitelisted: true, // Bilinmeyen alanlar gelirse 400 döner / Returns 400 for unknown fields
-      transform: true,            // Gelen veriyi DTO tipine dönüştürür / Auto-transforms payloads to DTO types
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // 📖 3. SWAGGER — OpenAPI Documentation
-  // Interaktif API dokümantasyonu oluşturur (/api/docs)
-  // Generates interactive API documentation at /api/docs
+  // ⚙️ GLOBAL INTERCEPTORS & FILTERS
+  // JSON çıktılarından @Exclude() alanlarını temizler / Removes @Exclude() fields from JSON outputs
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)), new LoggingInterceptor());
+  // Hataları standart bir formatta döner / Returns errors in a standardized format
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // 📖 SWAGGER — API Documentation
+  // Sadece üretim dışı ortamlarda aktifleştirilir / Enabled only in non-production environments
+  if (configService.get('NODE_ENV') !== 'production') {
+    setupSwagger(app);
+  }
+
+  // 🚀 SUNUCU BAŞLATMA — SERVER STARTUP
+  const port = configService.get<number>('PORT') || 3000;
+  await app.listen(port);
+
+  logger.log(`🚀 Application is running in ${configService.get('NODE_ENV')} mode`);
+  logger.log(`🔗 URL: http://localhost:${port}/api`);
+  logger.log(`📚 Swagger Docs: http://localhost:${port}/api/docs`);
+}
+
+/**
+ * Swagger Dokümantasyon Yapılandırması
+ * Swagger Documentation Configuration
+ */
+function setupSwagger(app: NestExpressApplication) {
   const config = new DocumentBuilder()
-    .setTitle('NestJS Boilerplate API')
-    .setDescription('Production-ready backend infrastructure built with NestJS + Prisma + PostgreSQL.')
-    .setVersion('1.3.0')
-    .addBearerAuth() // JWT token girişi için Swagger'a kilit ikonu ekler / Adds lock icon for JWT auth
+    .setTitle('NestJS Boilerplate')
+    .setDescription('Production-ready API documentation')
+    .setVersion('1.4.0')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
-
-  // ⚙️ 4. GLOBAL INTERCEPTORS & FILTERS
-  // ClassSerializer: @Exclude() ile işaretli alanları JSON çıktısından gizler
-  // ClassSerializer: Hides fields marked with @Exclude() from JSON responses
-  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  // HttpExceptionFilter: Tüm hataları standart JSON formatında döner
-  // HttpExceptionFilter: Returns all errors in a standardized JSON format
-  app.useGlobalFilters(new HttpExceptionFilter());
-
-  const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-
-  logger.log(`🚀 Application is running at: http://localhost:${port}/api`);
-  logger.log(`📖 API Documentation: http://localhost:${port}/api/docs`);
 }
 
+// Uygulamayı başlat ve kritik hataları yakala / Start app and catch critical errors
 bootstrap().catch((err) => {
-  console.error('Critical error during application bootstrap:', err);
+  console.error('❌ Critical error during bootstrap:', err);
   process.exit(1);
 });

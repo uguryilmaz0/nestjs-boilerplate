@@ -7,6 +7,52 @@ See [standard-version](https://github.com/conventional-changelog/standard-versio
 
 ---
 
+## [1.4.0] — 2026-02-20
+
+### Added / Eklenenler
+- **Winston structured logging** — replaced default NestJS logger with Winston (`nest-winston`) at bootstrap level for production-grade logging
+  Varsayılan NestJS logger'ı Winston (`nest-winston`) ile değiştirildi — üretim düzeyinde yapılandırılmış loglama
+- **Daily-rotating log files** — `logs/error-%DATE%.log` (14-day retention) and `logs/combined-%DATE%.log` (30-day retention) with gzip compression via `winston-daily-rotate-file`
+  Günlük dönen log dosyaları — hata logları (14 gün) ve birleşik loglar (30 gün), gzip sıkıştırma ile
+- **Global `LoggingInterceptor`** — logs `[METHOD] URL - STATUS - DURATIONms - IP: CLIENT_IP` for every HTTP request
+  Global HTTP istek loglama interceptor'ı — her istek için metod, URL, durum kodu, süre ve IP loglar
+- **Environment validation** (`env.validation.ts`) — startup-time validation of `NODE_ENV`, `PORT`, `DATABASE_URL` using `class-validator` / `class-transformer`
+  Ortam değişkeni doğrulama — başlangıçta `NODE_ENV`, `PORT`, `DATABASE_URL` doğrulanır
+- **`Environment` enum** (`environment.enum.ts`) — type-safe environment checks (`DEVELOPMENT`, `PRODUCTION`, `TEST`, `STAGING`)
+  Tip güvenli ortam kontrolleri için `Environment` enum'u
+- **`GET /blog/error-test`** endpoint — tests global exception filter with raw (non-HTTP) errors
+  Global exception filter'ı ham hatalarla test eden endpoint
+- **`NODE_ENV`** added to `.env.example` with bilingual comment
+  `.env.example` dosyasına `NODE_ENV` eklendi
+
+### Changed / Değişenler
+- **`HttpExceptionFilter`** now catches **all** exceptions (`@Catch()`) — not just `HttpException`; falls back to `500 Internal Server Error` for raw `Error` objects
+  `HttpExceptionFilter` artık tüm hataları yakalar — sadece `HttpException` değil, ham `Error` nesneleri de
+- **Severity-based logging** in exception filter — `logger.error()` with stack trace for 5xx; `logger.warn()` for 4xx
+  Hata filtresinde ciddiyete dayalı loglama — 5xx için stack trace ile `error()`, 4xx için `warn()`
+- **Stack traces in dev** — error response includes `stack` field when `NODE_ENV !== 'production'` and status >= 500
+  Geliştirme ortamında hata yanıtlarına `stack` alanı eklenir (üretimde gizlenir)
+- **Error response format** — added `success: false` field; removed `project` field and `IExceptionResponse` interface
+  Hata yanıt formatı güncellendi — `success: false` eklendi, `project` alanı ve `IExceptionResponse` arayüzü kaldırıldı
+- **`main.ts` refactored** — `ConfigService` for `PORT` and conditional Swagger (no more `process.env.PORT`); Swagger extracted to `setupSwagger()` function
+  `main.ts` refactor edildi — `PORT` ve koşullu Swagger için `ConfigService`; Swagger ayrı fonksiyona çıkarıldı
+- **Swagger conditionally disabled** in production via `ConfigService`
+  Swagger üretim ortamında `ConfigService` ile koşullu devre dışı bırakıldı
+- **CORS simplified** — hardcoded origin list replaced with `origin: true`
+  CORS basitleştirildi — sabit kaynak listesi yerine `origin: true`
+- **Swagger version** updated to `1.4.0`
+  Swagger versiyonu `1.4.0` olarak güncellendi
+
+### Dependencies / Bağımlılıklar
+- Added `nest-winston` `^1.10.2` — NestJS-Winston integration bridge
+  NestJS-Winston entegrasyon köprüsü
+- Added `winston` `^3.19.0` — structured logging framework
+  Yapılandırılmış loglama çerçevesi
+- Added `winston-daily-rotate-file` `^5.0.0` — daily log rotation with compression
+  Sıkıştırma ile günlük log rotasyonu
+
+---
+
 ## [1.3.0] — 2026-02-16
 
 ### Added / Eklenenler
