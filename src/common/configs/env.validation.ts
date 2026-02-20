@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, IsString, validateSync } from 'class-validator';
+import { IsDefined, IsEnum, IsNotEmpty, IsNumber, IsString, validateSync } from 'class-validator';
 import { Environment } from '../enums/environment.enum';
 
 class EnvironmentVariables {
@@ -8,9 +8,17 @@ class EnvironmentVariables {
     }) NODE_ENV: Environment;
 
     @IsNumber()
-    PORT: number = 3000; // Varsayılan port / Default port
+    @IsDefined()
+    @IsNotEmpty({ message: 'Hata: PORT boş olamaz / Error: PORT cannot be empty' })
+    PORT: number;
 
-    @IsString() DATABASE_URL: string;
+    @IsString()
+    @IsNotEmpty({ message: 'Hata: DATABASE_URL boş olamaz / Error: DATABASE_URL cannot be empty' })
+    DATABASE_URL: string;
+
+    @IsString()
+    @IsNotEmpty({ message: 'Hata: JWT_SECRET boş olamaz / Error: JWT_SECRET cannot be empty' })
+    JWT_SECRET: string;
 }
 
 export function validateEnv(config: Record<string, any>) {

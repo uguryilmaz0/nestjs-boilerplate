@@ -7,11 +7,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { CommentModule } from './comment/comment.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller';
+import { validateEnv } from './common/configs/env.validation';
 
 @Module({
   imports: [
     BlogModule,
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env', validate: validateEnv }),
     ThrottlerModule.forRoot({
       throttlers: [{
         ttl: 60000, // 1 dakika / 1 minute
@@ -22,6 +24,7 @@ import { APP_GUARD } from '@nestjs/core';
     PrismaModule,
     CommentModule,
   ],
+  controllers: [AppController],
   providers: [AppService, {
     provide: APP_GUARD,
     useClass: ThrottlerGuard,

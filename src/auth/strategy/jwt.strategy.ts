@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UserEntity } from '../entity/user.entity';
 
 @Injectable()
@@ -31,14 +31,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       where: { id: payload.sub },
     });
 
-    if (!user) {
-      throw new Error('Kullanıcı bulunamadı / User not found');
-    }
-
+    // Kullanıcı yoksa veya silinmişse reddet / Reject if user not found or deleted
     if (!user || user.deletedAt) {
-      throw new UnauthorizedException('Geçersiz token veya kullanıcı bulunamadı. / Invalid token or user not found.');
+      throw new UnauthorizedException(
+        'Geçersiz token veya kullanıcı bulunamadı / Invalid token or user not found'
+      );
     }
 
+    // Kullanıcıyı döndür, bu bilgi request.user içinde erişilebilir olacak / Return user, this info will be accessible in request.user
     return new UserEntity(user);
   }
 }
