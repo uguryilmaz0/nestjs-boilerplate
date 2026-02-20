@@ -1,12 +1,13 @@
-# Changelog / Değişiklik Günlüğü
+# Changelog
 
-All notable changes to this project will be documented in this file.
-Bu projedeki tüm önemli değişiklikler bu dosyada belgelenir.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
-See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
-Sürüm kılavuzu için yukarıdaki bağlantıya bakın.
+## [1.4.3](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.4.2...v1.4.3) (2026-02-20)
 
----
+
+### Bug Fixes
+
+* **security:** resolve all vulnerabilities and migrate to commit-and-tag-version ([8977285](https://github.com/uguryilmaz0/nestjs-boilerplate/commit/8977285ad82ee55483afec8d6282d5674b4bf738))
 
 ## [1.4.3] — 2026-02-21
 
