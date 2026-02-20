@@ -1,9 +1,41 @@
-# Changelog / Değişiklik Günlüğü
+# Changelog
 
-All notable changes to this project will be documented in this file.
-Bu projedeki tüm önemli değişiklikler bu dosyada belgelenir.
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
-See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+## [1.4.3](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.4.2...v1.4.3) (2026-02-20)
+
+
+### Bug Fixes
+
+* **security:** resolve all vulnerabilities and migrate to commit-and-tag-version ([8977285](https://github.com/uguryilmaz0/nestjs-boilerplate/commit/8977285ad82ee55483afec8d6282d5674b4bf738))
+
+## [1.4.3] — 2026-02-21
+
+### Security / Güvenlik
+- **npm audit 0 vulnerabilities** — all known dependency vulnerabilities resolved via overrides and upgrades
+  Tüm bilinen bağımlılık güvenlik açıkları override'lar ve güncellemeler ile giderildi — `npm audit` artık 0 zafiyet gösteriyor
+- **`ajv` override** → `^8.17.2` — fixes prototype pollution vulnerability (CVE)
+  Prototype pollution güvenlik açığı düzeltildi
+- **`minimatch` override** → `^10.2.1` — fixes ReDoS (Regular Expression Denial of Service) vulnerability
+  ReDoS güvenlik açığı düzeltildi
+- **`lodash`**, **`hono`**, **`tar`** overrides retained for continued protection
+  Süregelen koruma için mevcut override'lar korundu
+
+### Changed / Değişenler
+- **`standard-version`** → **`commit-and-tag-version`** `^12.6.1` — `standard-version` is deprecated; migrated to its actively maintained fork
+  `standard-version` kullanımdan kaldırıldı; aktif olarak sürdürülen fork'una geçildi
+- **`@aws-sdk/client-s3`** `^3.989.0` → `^3.995.0` — latest security patches and improvements
+  En son güvenlik yamaları ve iyileştirmeler
+- **`@aws-sdk/lib-storage`** `^3.989.0` → `^3.995.0` — kept in sync with client-s3
+  client-s3 ile senkron tutuldu
+- **`@nestjs/schematics`** `11.0.0` → `^11.0.9` — bugfixes and compatibility improvements
+  Hata düzeltmeleri ve uyumluluk iyileştirmeleri
+- **Release script** updated in `package.json`: `"release": "commit-and-tag-version"`
+  Release komutu güncellendi
+
+### Added / Eklenenler
+- **`@nestjs/testing`** `^11.1.14` — official NestJS testing utilities (Sprint 2 preparation)
+  Resmi NestJS test araçları eklendi (Sprint 2 hazırlığı)
 
 ---
 
