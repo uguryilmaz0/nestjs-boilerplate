@@ -1,16 +1,16 @@
-import { Controller, Get, Post, Query, UseGuards, Body, Patch, Param, ParseIntPipe, Delete, ParseFilePipe, UseInterceptors, UploadedFile, MaxFileSizeValidator } from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards, Body, Patch, Param, ParseIntPipe, Delete, ParseFilePipe, UseInterceptors, UploadedFile, MaxFileSizeValidator, NotFoundException } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreatePostsDto } from './dto/create-posts.dto';
-import { GetUser } from 'src/auth/decorator/get-user.decorator';
-import { JwtGuard } from 'src/auth/guard/jwt.guard';
+import { GetUser } from '../auth/decorator/get-user.decorator';
+import { JwtGuard } from '../auth/guard/jwt.guard';
 import { UpdatePostsDto } from './dto/update-post.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ImageValidator } from 'src/common/validators/image-type.validator';
+import { ImageValidator } from '../common/validators/image-type.validator';
 import { GetPostsQueryDto } from './dto/get-posts-query.dto';
 import { Role } from '@prisma/client';
-import { Roles } from 'src/auth/decorator/roles-decorator';
+import { Roles } from '../auth/decorator/roles-decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { RolesGuard } from '../auth/guard/roles.guard';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -25,12 +25,13 @@ export class BlogController {
     return this.blogService.getPosts({ search: q, page: 1, limit: 10 });
   }
 
-  // Bu endpoint, global exception filter'ımızın ham hataları nasıl yakaladığını test etmek için eklendi.
-  // This endpoint is added to test how our global exception filter catches raw errors.
+  // 🛡️ GÜVENLİK: Bu endpoint sadece geliştirme ve test ortamlarında kullanılabilir / This endpoint is for development/testing only
   @Get('error-test')
   testError() {
-    // Bu ham bir JavaScript hatasıdır, NestJS hatası değildir. / This is a raw JavaScript error, not a NestJS error.
-    // Filtremiz bunu yakalayıp 500 status koduna çevirmeli. / Our filter should catch this and convert it to a 500 status code.
+    // 🛡️ GÜVENLİK: Üretim ortamında bu endpoint'i pasifize ediyoruz
+    if (process.env.NODE_ENV === 'production') {
+      throw new NotFoundException('Bu test endpoint\'i üretimde kullanılamaz.');
+    }
     throw new Error('Sistem çöktü! / System crashed!');
   }
 
@@ -44,7 +45,8 @@ export class BlogController {
   @ApiOperation({ summary: 'Tek bir yazıyı getir / Get a single post (with comments)' })
   @ApiParam({ name: 'id', description: 'Yazı ID / Post ID', example: 1 })
   @ApiResponse({ status: 200, description: 'Yazı detayı / Post details' })
-  @ApiResponse({ status: 403, description: 'Yazı bulunamadı / Post not found' })
+  // ✅ DÜZELTME: 403 yerine artık 404 dönüyoruz (Service'te değiştirdiğimiz için)
+  @ApiResponse({ status: 404, description: 'Yazı bulunamadı / Post not found' })
   @Get(':id')
   getOne(@Param('id', ParseIntPipe) id: number) {
     return this.blogService.getPostById(id);
@@ -64,7 +66,9 @@ export class BlogController {
   @ApiBearerAuth()
   @ApiParam({ name: 'id', description: 'Güncellenecek yazı ID / Post ID to update', example: 1 })
   @ApiResponse({ status: 200, description: 'Yazı güncellendi / Post updated' })
-  @ApiResponse({ status: 403, description: 'Yetki hatası veya yazı bulunamadı / Not authorized or post not found' })
+  // ✅ DÜZELTME: Hata türlerini netleştirdik / Clarified error responses
+  @ApiResponse({ status: 404, description: 'Yazı bulunamadı / Post not found' })
+  @ApiResponse({ status: 403, description: 'Yetki hatası / Not authorized' })
   @UseGuards(JwtGuard, RolesGuard)
   @Patch(':id')
   update(
@@ -79,8 +83,10 @@ export class BlogController {
   @ApiOperation({ summary: 'Yazıyı sil / Delete a post (Admin/Author)' })
   @ApiBearerAuth()
   @ApiParam({ name: 'id', description: 'Silinecek yazı ID / Post ID to delete', example: 1 })
-  @ApiResponse({ status: 200, description: 'Yazı silindi / Post deleted (soft delete)' })
-  @ApiResponse({ status: 403, description: 'Yetki hatası veya yazı bulunamadı / Not authorized or post not found' })
+  @ApiResponse({ status: 200, description: 'Yazı silindi / Post deleted' })
+  // ✅ DÜZELTME: Burada da 404/403 ayrımını Swagger'a işledik / Added 404/403 distinction to Swagger
+  @ApiResponse({ status: 404, description: 'Yazı bulunamadı / Post not found' })
+  @ApiResponse({ status: 403, description: 'Yetki hatası / Not authorized' })
   @UseGuards(JwtGuard, RolesGuard)
   @Delete(':id')
   @Roles(Role.ADMIN, Role.AUTHOR)

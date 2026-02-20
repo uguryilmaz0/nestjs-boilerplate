@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import { LoginDto } from './dto/login.dto';
@@ -15,6 +15,7 @@ export interface AuthResponse {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name); // Logger for authentication events / Kimlik doğrulama olayları için logger
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
@@ -38,9 +39,9 @@ export class AuthService {
       return new UserEntity(user);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        // P2002: Unique constraint ihlali / Unique constraint violation
+        // P2002: Unique constraint ihlali (409) / Unique constraint violation (409)
         if (error.code === 'P2002') {
-          throw new ForbiddenException('Bu e-posta adresi zaten kullanılmaktadır. / This email is already in use.');
+          throw new ConflictException('Bu e-posta adresi zaten kullanılmaktadır. / This email is already in use.');
         }
       }
       throw error;
@@ -48,8 +49,8 @@ export class AuthService {
   }
 
   // JWT Token Oluşturma Metodu / JWT Token Generation Method
-  async signToken(userId: number, email: string): Promise<string> {
-    const payload = { sub: userId, email };
+  async signToken(userId: number, email: string, role: string): Promise<string> {
+    const payload = { sub: userId, email, role };
     const secret = this.config.get<string>('JWT_SECRET');
 
     return this.jwt.signAsync(payload, {
@@ -65,21 +66,24 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    // 2. Kullanıcı yoksa hata fırlat / Throw if user not found
-    if (!user) {
-      throw new ForbiddenException('Geçersiz kimlik bilgileri. / Invalid credentials.');
+    // 2. Kullanıcı yoksa veya silinmişse hata fırlat (401) / Throw if user doesn't exist or is deleted (401)
+    if (!user || user.deletedAt) {
+      this.logger.warn(`Failed login attempt for email: ${dto.email} / Hatalı giriş denemesi`);
+      throw new UnauthorizedException('Geçersiz kimlik bilgileri. / Invalid credentials.');
     }
 
     // 3. Şifreleri karşılaştır (plain text vs hashed) / Compare passwords
     const psMatch = await bcrypt.compare(dto.password, user.password);
 
-    // 4. Şifre eşleşmiyorsa hata fırlat / Throw if password doesn't match
+    // 4. Şifre eşleşmiyorsa hata fırlat (401) / Throw if password doesn't match (401)
     if (!psMatch) {
-      throw new ForbiddenException('Geçersiz kimlik bilgileri. / Invalid credentials.');
+      throw new UnauthorizedException('Geçersiz kimlik bilgileri. / Invalid credentials.');
     }
 
     // 5. Entity dönüşümü ile şifre alanını otomatik gizle / Auto-hide password via Entity transform
-    const token = await this.signToken(user.id, user.email);
+    const token = await this.signToken(user.id, user.email, user.role);
+
+    // 6. JWT token ve kullanıcı bilgilerini döndür / Return JWT token and user info
     return {
       access_token: token,
       user: new UserEntity(user),

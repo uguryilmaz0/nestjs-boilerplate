@@ -106,6 +106,10 @@ Client Request
 | Password Hashing / Şifre Hashleme | bcrypt with salt rounds for secure storage / Güvenli depolama için bcrypt |
 | Custom Decorators / Özel Dekoratörler | `@GetUser()` for request user extraction, `@Roles()` for route protection / Kullanıcı çıkarma ve rota koruma |
 | Serialization / Serileştirme | Automatic password exclusion from API responses via `class-transformer` / API yanıtlarından otomatik şifre gizleme |
+| Soft-Deleted User Protection / Silinmiş Kullanıcı Koruması | Soft-deleted users cannot login — `deletedAt` check in `signin()` / Silinmiş kullanıcılar giriş yapamaz |
+| JWT Role Payload / JWT Rol Bilgisi | JWT token includes `role` for efficient role-based access without extra DB queries / JWT token rol bilgisi içerir, ekstra DB sorgusu gerektirmez |
+| Auth Event Logging / Kimlik Doğrulama Olay Loglama | Failed login attempts logged with email for security auditing / Başarısız giriş denemeleri güvenlik denetimi için loglanır |
+| Proper HTTP Status Codes / Doğru HTTP Durum Kodları | `409 Conflict` for duplicate email, `401 Unauthorized` for invalid credentials, `404 Not Found` for missing resources / Uygun HTTP durum kodları |
 
 ### 📝 Blog Engine / Blog Motoru
 
@@ -488,7 +492,7 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 - [x] Soft delete preserves data integrity / Yumuşak silme veri bütünlüğünü korur — kayıtlar asla fiziksel olarak silinmez
 - [x] Rate limiting with `@nestjs/throttler` (100 req/min per IP) / `@nestjs/throttler` ile hız sınırlama
 - [x] Helmet.js HTTP security headers / Helmet.js HTTP güvenlik başlıkları
-- [x] Graceful shutdown with database cleanup / Veritabanı temizliğiyle zarif kapanma
+- [x] Graceful shutdown with database cleanup (Prisma + pg.Pool) / Veritabanı temizliğiyle zarif kapanma (Prisma + pg.Pool)
 - [x] Cloud-agnostic S3 via `ConfigService` (no `process.env`) / `ConfigService` ile bulut bağımsız S3
 - [x] Winston structured logging with daily-rotating log files / Winston yapılandırılmış loglama ve günlük dönen log dosyaları
 - [x] HTTP request logging (method, URL, status, duration, IP) / HTTP istek loglama
@@ -496,7 +500,13 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 - [x] Severity-based error logging (5xx → error + stack, 4xx → warn) / Ciddiyete dayalı hata loglama
 - [x] Stack traces hidden in production responses / Üretim yanıtlarında stack trace gizlenir
 - [x] Swagger automatically disabled in production / Swagger üretimde otomatik devre dışı
-- [x] Startup environment validation (`NODE_ENV`, `PORT`, `DATABASE_URL`) / Başlangıç ortam doğrulaması
+- [x] Startup environment validation (`NODE_ENV`, `PORT`, `DATABASE_URL`, `JWT_SECRET`) / Başlangıç ortam doğrulaması
+- [x] Soft-deleted users cannot login — `deletedAt` check in both `signin()` and `JwtStrategy` / Silinmiş kullanıcılar giriş yapamaz
+- [x] Failed login attempt logging with email for security auditing / Başarısız giriş denemeleri loglanır
+- [x] Proper HTTP status codes: `409` duplicate signup, `401` invalid credentials, `404` not found / Doğru HTTP durum kodları
+- [x] JWT payload includes user `role` for efficient authorization / JWT payload kullanıcı rolünü içerir
+- [x] Production-guarded error-test endpoint (disabled in production) / Üretimde devre dışı test endpoint'i
+- [x] All imports use relative paths (no fragile `src/` absolute imports) / Tüm import'lar relative path kullanır
 - [ ] HTTPS enforcement (required for production / üretim için gerekli)
 
 ### API Response Formats / API Yanıt Formatları
