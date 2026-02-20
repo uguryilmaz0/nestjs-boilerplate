@@ -1,6 +1,6 @@
 {
   "name": "nestjs-boilerplate",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -44,7 +44,9 @@
     "@nestjs/cli": "11.0.16",
     "@nestjs/schematics": "11.0.0",
     "@prisma/studio": "^0.511.0",
+    "@types/bcrypt": "^6.0.0",
     "@types/multer": "^2.0.0",
+    "@types/pg": "^8.16.0",
     "prisma": "^7.3.0",
     "standard-version": "^9.5.0",
     "typescript": "5.7.3"

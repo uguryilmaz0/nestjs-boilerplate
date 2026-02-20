@@ -86,7 +86,7 @@ function setupSwagger(app: NestExpressApplication) {
   const config = new DocumentBuilder()
     .setTitle('NestJS Boilerplate')
     .setDescription('Production-ready API documentation')
-    .setVersion('1.4.0')
+    .setVersion('1.4.2')
     .addBearerAuth()
     .build();
 
