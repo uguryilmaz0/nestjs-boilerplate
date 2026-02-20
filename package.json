@@ -9,11 +9,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "release": "standard-version"
+    "release": "commit-and-tag-version"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.989.0",
-    "@aws-sdk/lib-storage": "^3.989.0",
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/lib-storage": "^3.995.0",
     "@nestjs/common": "11.1.12",
     "@nestjs/config": "4.0.2",
     "@nestjs/core": "11.1.12",
@@ -41,19 +41,22 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "11.0.16",
-    "@nestjs/schematics": "11.0.0",
+    "@nestjs/cli": "^11.0.16",
+    "@nestjs/schematics": "^11.0.9",
+    "@nestjs/testing": "^11.1.14",
     "@prisma/studio": "^0.511.0",
     "@types/bcrypt": "^6.0.0",
     "@types/multer": "^2.0.0",
     "@types/pg": "^8.16.0",
+    "commit-and-tag-version": "^12.6.1",
     "prisma": "^7.3.0",
-    "standard-version": "^9.5.0",
     "typescript": "5.7.3"
   },
   "overrides": {
     "lodash": "^4.17.21",
     "hono": "^4.11.7",
-    "tar": "^7.5.7"
+    "tar": "^7.5.7",
+    "ajv": "^8.17.2",
+    "minimatch": "^10.2.1"
   }
 }

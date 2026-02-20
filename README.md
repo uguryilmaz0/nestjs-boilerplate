@@ -470,7 +470,7 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 | **Production** | `npm run start:prod` | Run compiled application / Derlenmiş uygulamayı çalıştır |
 | **Lint** | `npm run lint` | Run ESLint with auto-fix / ESLint kod analizi |
 | **Format** | `npm run format` | Run Prettier on source files / Prettier biçimlendirme |
-| **Release** | `npm run release` | Bump version (standard-version) / Sürüm yükselt |
+| **Release** | `npm run release` | Bump version (commit-and-tag-version) / Sürüm yükselt |
 | **Migrate** | `npx prisma migrate dev` | Apply pending migrations / Migration'ları uygula |
 | **Studio** | `npx prisma studio` | Open Prisma database browser / Veritabanı arayüzünü aç |
 | **Generate** | `npx prisma generate` | Regenerate Prisma Client / Prisma Client'ı yeniden oluştur |
@@ -507,6 +507,8 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 - [x] JWT payload includes user `role` for efficient authorization / JWT payload kullanıcı rolünü içerir
 - [x] Production-guarded error-test endpoint (disabled in production) / Üretimde devre dışı test endpoint'i
 - [x] All imports use relative paths (no fragile `src/` absolute imports) / Tüm import'lar relative path kullanır
+- [x] `npm audit` 0 vulnerabilities — all dependency CVEs resolved via overrides (`ajv`, `minimatch`, `lodash`, `hono`, `tar`) / Tüm bağımlılık güvenlik açıkları override'lar ile giderildi
+- [x] Deprecated `standard-version` replaced with maintained `commit-and-tag-version` / Kullanımdan kaldırılan paket aktif fork ile değiştirildi
 - [ ] HTTPS enforcement (required for production / üretim için gerekli)
 
 ### API Response Formats / API Yanıt Formatları
