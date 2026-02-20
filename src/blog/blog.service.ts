@@ -1,10 +1,10 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePostsDto } from './dto/create-posts.dto';
 import { UpdatePostsDto } from './dto/update-post.dto';
 import { GetPostsQueryDto } from './dto/get-posts-query.dto';
 import slugify from 'slugify';
-import { S3Service } from 'src/common/services/s3.service';
+import { S3Service } from '../common/services/s3.service';
 import { randomUUID } from 'crypto';
 import { Role } from '@prisma/client';
 
@@ -35,10 +35,13 @@ export class BlogService {
 
     // PostgreSQL tsvector ile tam metin araması / Full-text search using PostgreSQL tsvector
     if (search) {
-      where.OR = [
-        { title: { search: search.split(' ').join(' & ') } },
-        { content: { search: search.split(' ').join(' & ') } },
-      ]
+      const sanitizedSearch = search.replace(/[&|!:]/g, '').trim(); // & | ! : karakterlerini temizle / Remove & | ! : characters
+      if (sanitizedSearch) {
+        where.OR = [
+          { title: { search: sanitizedSearch } }, // Başlıkta ara / Search in title
+          { content: { search: sanitizedSearch } }, // İçerikte ara / Search in content
+        ]
+      }
     }
 
     // Veri ve toplam sayıyı paralel çek (performans) / Fetch data & count in parallel
@@ -97,7 +100,7 @@ export class BlogService {
       }
     })
 
-    if (!post) throw new ForbiddenException('Yazı bulunamadı. / Post not found.');
+    if (!post) throw new NotFoundException('Yazı bulunamadı. / Post not found.');
     return post;
   }
 
@@ -139,11 +142,16 @@ export class BlogService {
       where: { id: postId },
     })
 
+    if (!post || post.deletedAt) {
+      throw new NotFoundException('Yazı bulunamadı. / Post not found.');
+    }
+
+    // Sahiplik veya admin yetkisi kontrolü / Check ownership or admin role
     const isOwner = post?.authorId === userId;
     const isAdmin = userRole === Role.ADMIN;
 
-    if (!post || (!isOwner && !isAdmin)) {
-      throw new ForbiddenException('Bu yazıyı güncelleme yetkiniz yok veya yazı bulunamadı. / Not authorized or post not found.');
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Bu işlemi yapma yetkiniz yok. / Not authorized.');
     }
 
     // 2. Güncelleme işlemi / Perform update
@@ -177,11 +185,15 @@ export class BlogService {
       where: { id: postId, deletedAt: null },
     })
 
+    if (!post) {
+      throw new NotFoundException('Yazı bulunamadı. / Post not found.');
+    }
+
     const isOwner = post?.authorId === userId;
     const isAdmin = userRole === Role.ADMIN;
 
-    if (!post || (!isOwner && !isAdmin)) {
-      throw new ForbiddenException('Bu yazıyı silme yetkiniz yok veya yazı bulunamadı. / Not authorized or post not found.');
+    if (!isOwner && !isAdmin) {
+      throw new ForbiddenException('Bu yazıyı silme yetkiniz yok. / Not authorized.');
     }
 
     // 2. Soft delete: deletedAt alanını doldur / Populate deletedAt field
