@@ -46,10 +46,17 @@
     "@nestjs/testing": "^11.1.14",
     "@prisma/studio": "^0.511.0",
     "@types/bcrypt": "^6.0.0",
+    "@types/jest": "^30.0.0",
     "@types/multer": "^2.0.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.16.0",
+    "@types/supertest": "^6.0.3",
     "commit-and-tag-version": "^12.6.1",
+    "jest": "^30.2.0",
     "prisma": "^7.3.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.6",
     "typescript": "5.7.3"
   },
   "overrides": {
