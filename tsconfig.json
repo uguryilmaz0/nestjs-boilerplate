@@ -16,10 +16,16 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    /* Strict Type-Checking Options */
+    "strict": true, // Tüm katı kuralları açar / All strict type-checking options are enabled
+    "noImplicitAny": true, // Tipi belirtilmeyen 'any'lere izin vermez /  Disallow implicit 'any' types
+    "strictNullChecks": true, // null/undefined kontrollerini zorunlu kılar /  Enable strict null checks
+    "strictPropertyInitialization": false, // NestJS (DTO/Entity) için bazen false olması iyidir /  Ensure class properties are initialized in the constructor
+    /* Linter-like Checks */
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false, // Geliştirme aşamasında false kalabilir
+    "noUnusedParameters": false
   }
 }

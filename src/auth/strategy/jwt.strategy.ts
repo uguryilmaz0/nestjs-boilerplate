@@ -11,6 +11,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     config: ConfigService,
     private prisma: PrismaService,
   ) {
+    const jwtSecret = config.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is not defined');
+    }
+
     super({
       // 1. 'Authorization: Bearer <token>' başlığından token'ı çıkar
       //    Extract token from 'Authorization: Bearer <token>' header
@@ -18,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       // 2. Token süresi dolmuşsa reddet / Reject expired tokens
       ignoreExpiration: false,
       // 3. İmza doğrulama için gizli anahtar / Secret key for signature verification
-      secretOrKey: config.get<string>('JWT_SECRET'),
+      secretOrKey: jwtSecret,
     });
   }
 

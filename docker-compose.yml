@@ -14,6 +14,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # --- TEST VERİTABANI (Sadece E2E Testleri İçin) ---
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: my-postgres-test
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=test_db
+    ports:
+      - "5433:5432" # DİKKAT: Dış portu 5433 yapıyoruz, çünkü 5432 zaten postgres servisi tarafından kullanılıyor
+
   # MinIO (S3 uyumlu nesne deposu / S3-compatible object storage)
   minio:
     image: minio/minio

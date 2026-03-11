@@ -135,24 +135,36 @@ export class BlogService {
     })
   }
 
-  // Yazıyı güncelle (kısmi) / Update a post (partial)
-  async updatePost(userId: number, userRole: string, postId: number, dto: UpdatePostsDto) {
-    // 1. Yazı varlığı ve sahiplik kontrolü / Check post existence & ownership
+  // Yazıyı bul ve yetki kontrolü / Find post & check access - shared logic for update & delete
+  // Bu method, hem update hem delete işlemlerinde yazıyı bulup kullanıcının yetkili olup olmadığını kontrol eder.
+  // Don't repeat yourself: This method is used in both update and delete operations to find the post and check if the user has permission to modify it.
+  private async getPostAndValidateAccess(postId: number, userId: number, userRole: string) {
+
+    // 1. Yazıyı bul / Find the post
     const post = await this.prisma.post.findUnique({
-      where: { id: postId },
+      where: { id: postId, deletedAt: null },
     })
 
-    if (!post || post.deletedAt) {
-      throw new NotFoundException('Yazı bulunamadı. / Post not found.');
-    }
+    // 2. Yazı yoksa hata fırlat / Throw if post not found
+    if (!post) throw new NotFoundException('Yazı Bulunamadı. / Post not found.');
 
-    // Sahiplik veya admin yetkisi kontrolü / Check ownership or admin role
-    const isOwner = post?.authorId === userId;
+    // 3. Yetki kontrolü: Yazı sahibi mi? Veya admin mi? / Check if user is post owner or admin
+    const isOwner = post.authorId === userId;
     const isAdmin = userRole === Role.ADMIN;
 
+    // Eğer kullanıcı ne sahibi ne de admin ise yetkisiz / If user is neither owner nor admin, unauthorized
     if (!isOwner && !isAdmin) {
       throw new ForbiddenException('Bu işlemi yapma yetkiniz yok. / Not authorized.');
     }
+
+    // 4. Her şey yolundaysa yazıyı döndür / If everything is fine, return the post
+    return post;
+  }
+
+  // Yazıyı güncelle (kısmi) / Update a post (partial)
+  async updatePost(userId: number, userRole: string, postId: number, dto: UpdatePostsDto) {
+    // 1. Yazıyı bul ve yetki kontrolü / Find post & check ownership
+    await this.getPostAndValidateAccess(postId, userId, userRole);
 
     // 2. Güncelleme işlemi / Perform update
     return await this.prisma.post.update({
@@ -181,20 +193,7 @@ export class BlogService {
   // Yazıyı sil (soft delete) / Delete a post (soft delete)
   async deletePost(userId: number, userRole: string, postId: number) {
     // 1. Yazıyı bul ve yetki kontrolü / Find post & check ownership
-    const post = await this.prisma.post.findUnique({
-      where: { id: postId, deletedAt: null },
-    })
-
-    if (!post) {
-      throw new NotFoundException('Yazı bulunamadı. / Post not found.');
-    }
-
-    const isOwner = post?.authorId === userId;
-    const isAdmin = userRole === Role.ADMIN;
-
-    if (!isOwner && !isAdmin) {
-      throw new ForbiddenException('Bu yazıyı silme yetkiniz yok. / Not authorized.');
-    }
+    const post = await this.getPostAndValidateAccess(postId, userId, userRole);
 
     // 2. Soft delete: deletedAt alanını doldur / Populate deletedAt field
     await this.prisma.post.update({
@@ -208,7 +207,7 @@ export class BlogService {
       await this.s3Service.deleteFile(post.image);
     }
 
-    return { message: 'Yazı başarıyla silindi. / Post deleted successfully (soft delete).' };
+    return { message: 'Yazı başarıyla silindi. / Post deleted successfully.' };
   }
 
   // Resim yükle (S3) / Upload image to S3

@@ -1,4 +1,8 @@
-import { Controller, Get, Post, Query, UseGuards, Body, Patch, Param, ParseIntPipe, Delete, ParseFilePipe, UseInterceptors, UploadedFile, MaxFileSizeValidator, NotFoundException } from '@nestjs/common';
+import {
+  Controller, Get, Post, Query, UseGuards, Body, Patch,
+  Param, ParseIntPipe, Delete, ParseFilePipe, UseInterceptors,
+  UploadedFile, MaxFileSizeValidator, NotFoundException
+} from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreatePostsDto } from './dto/create-posts.dto';
 import { GetUser } from '../auth/decorator/get-user.decorator';
@@ -9,69 +13,100 @@ import { ImageValidator } from '../common/validators/image-type.validator';
 import { GetPostsQueryDto } from './dto/get-posts-query.dto';
 import { Role } from '@prisma/client';
 import { Roles } from '../auth/decorator/roles-decorator';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags, ApiOperation, ApiResponse, ApiBearerAuth,
+  ApiConsumes, ApiBody, ApiParam, ApiQuery
+} from '@nestjs/swagger';
 import { RolesGuard } from '../auth/guard/roles.guard';
 
+/**
+ * Blog Yönetim Paneli: Yazı oluşturma, listeleme, güncelleme ve silme işlemlerini yönetir.
+ * Blog Management Controller: Handles post creation, listing, updating, and deletion.
+ */
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
   constructor(private readonly blogService: BlogService) { }
 
+  /**
+   * Yazılarda anahtar kelimeye göre arama yapar.
+   * Searches for posts based on a specific keyword.
+   */
   @ApiOperation({ summary: 'Yazılarda arama yap / Search posts' })
   @ApiQuery({ name: 'q', description: 'Arama terimi / Search term', example: 'NestJS' })
-  @ApiResponse({ status: 200, description: 'Arama sonuçları / Search results' })
+  @ApiResponse({ status: 200, description: 'Arama sonuçları başarıyla getirildi / Search results retrieved successfully' })
   @Get('search')
-  search(@Query('q') q: string) {
+  searchPosts(@Query('q') q: string) {
     return this.blogService.getPosts({ search: q, page: 1, limit: 10 });
   }
 
-  // 🛡️ GÜVENLİK: Bu endpoint sadece geliştirme ve test ortamlarında kullanılabilir / This endpoint is for development/testing only
+  /**
+   * Hata yakalama mekanizmasını test etmek için kullanılan diagnostik endpoint.
+   * Diagnostic endpoint used to test the error handling mechanism.
+   * !!!! GÜVENLİK/SECURITY: Üretim ortamında pasifize edilmiştir / Disabled in production. !!!!
+   */
+  @ApiOperation({ summary: 'Hata test endpointi / Error testing diagnostic' })
   @Get('error-test')
-  testError() {
-    // 🛡️ GÜVENLİK: Üretim ortamında bu endpoint'i pasifize ediyoruz
+  testErrorHandling() {
     if (process.env.NODE_ENV === 'production') {
-      throw new NotFoundException('Bu test endpoint\'i üretimde kullanılamaz.');
+      throw new NotFoundException('Bu test endpoint\'i üretimde kullanılamaz. / This test endpoint is unavailable in production.');
     }
-    throw new Error('Sistem çöktü! / System crashed!');
+    throw new Error('Sistem hata simülasyonu tetiklendi! / System error simulation triggered!');
   }
 
-  @ApiOperation({ summary: 'Tüm yazıları listele / List all posts (pagination, search, tag filter)' })
-  @ApiResponse({ status: 200, description: 'Yazı listesi ve meta bilgileri / Post list with metadata' })
+  /**
+   * Sayfalama ve filtreleme seçenekleriyle tüm yazıları listeler.
+   * Lists all posts with pagination and filtering options.
+   */
+  @ApiOperation({ summary: 'Yazıları listele / List posts' })
+  @ApiResponse({ status: 200, description: 'Yazı listesi ve meta veriler / Post list and metadata' })
   @Get()
-  getAll(@Query() query: GetPostsQueryDto) {
+  getAllPosts(@Query() query: GetPostsQueryDto) {
     return this.blogService.getPosts(query);
   }
 
-  @ApiOperation({ summary: 'Tek bir yazıyı getir / Get a single post (with comments)' })
-  @ApiParam({ name: 'id', description: 'Yazı ID / Post ID', example: 1 })
-  @ApiResponse({ status: 200, description: 'Yazı detayı / Post details' })
-  // ✅ DÜZELTME: 403 yerine artık 404 dönüyoruz (Service'te değiştirdiğimiz için)
-  @ApiResponse({ status: 404, description: 'Yazı bulunamadı / Post not found' })
+  /**
+   * Belirli bir ID'ye sahip yazının detaylarını getirir.
+   * Retrieves the details of a post by its specific ID.
+   */
+  @ApiOperation({ summary: 'Yazı detayı getir / Get post details' })
+  @ApiParam({ name: 'id', description: 'Benzersiz Yazı ID / Unique Post ID' })
+  @ApiResponse({ status: 200, description: 'Yazı detayı bulundu / Post details found' })
+  @ApiResponse({ status: 404, description: 'Belirtilen ID ile yazı bulunamadı / Post with specified ID not found' })
   @Get(':id')
-  getOne(@Param('id', ParseIntPipe) id: number) {
+  getPostById(@Param('id', ParseIntPipe) id: number) {
     return this.blogService.getPostById(id);
   }
 
-  @ApiOperation({ summary: 'Yeni yazı oluştur / Create a new post' })
+  /**
+   * Yeni bir blog yazısı oluşturur. Kimlik doğrulaması gerektirir.
+   * Creates a new blog post. Requires authentication.
+   */
+  @ApiOperation({ summary: 'Yeni yazı oluştur / Create post' })
   @ApiBearerAuth()
-  @ApiResponse({ status: 201, description: 'Yazı başarıyla oluşturuldu / Post created successfully' })
-  @ApiResponse({ status: 401, description: 'Yetkisiz — JWT token gerekli / Unauthorized — JWT required' })
+  @ApiResponse({ status: 201, description: 'Yazı başarıyla oluşturuldu / Post successfully created' })
+  @ApiResponse({ status: 401, description: 'Kimlik doğrulaması başarısız / Authentication failed' })
   @UseGuards(JwtGuard, RolesGuard)
   @Post('create')
-  async createPost(@GetUser('id') userId: number, @Body() dto: CreatePostsDto) {
+  async createNewPost(
+    @GetUser('id') userId: number,
+    @Body() dto: CreatePostsDto
+  ) {
     return this.blogService.createPost(userId, dto);
   }
 
-  @ApiOperation({ summary: 'Yazıyı güncelle / Update a post (partial)' })
+  /**
+   * Mevcut bir yazıyı günceller. Sadece yetkili kullanıcılar işlem yapabilir.
+   * Updates an existing post. Only authorized users can perform this action.
+   */
+  @ApiOperation({ summary: 'Yazıyı güncelle / Update post' })
   @ApiBearerAuth()
-  @ApiParam({ name: 'id', description: 'Güncellenecek yazı ID / Post ID to update', example: 1 })
-  @ApiResponse({ status: 200, description: 'Yazı güncellendi / Post updated' })
-  // ✅ DÜZELTME: Hata türlerini netleştirdik / Clarified error responses
-  @ApiResponse({ status: 404, description: 'Yazı bulunamadı / Post not found' })
-  @ApiResponse({ status: 403, description: 'Yetki hatası / Not authorized' })
+  @ApiParam({ name: 'id', description: 'Güncellenecek yazı ID / ID of post to update' })
+  @ApiResponse({ status: 200, description: 'Güncelleme başarılı / Update successful' })
+  @ApiResponse({ status: 403, description: 'Bu işlem için yetkiniz yok / You do not have permission for this action' })
   @UseGuards(JwtGuard, RolesGuard)
   @Patch(':id')
-  update(
+  updateExistingPost(
     @GetUser('id') userId: number,
     @GetUser('role') userRole: string,
     @Param('id', ParseIntPipe) id: number,
@@ -80,42 +115,51 @@ export class BlogController {
     return this.blogService.updatePost(userId, userRole, id, dto);
   }
 
-  @ApiOperation({ summary: 'Yazıyı sil / Delete a post (Admin/Author)' })
+  /**
+   * Belirtilen yazıyı kalıcı olarak siler (Admin veya Yazar yetkisi gerekir).
+   * Permanently deletes the specified post (Requires Admin or Author role).
+   */
+  @ApiOperation({ summary: 'Yazıyı sil / Delete post' })
   @ApiBearerAuth()
-  @ApiParam({ name: 'id', description: 'Silinecek yazı ID / Post ID to delete', example: 1 })
-  @ApiResponse({ status: 200, description: 'Yazı silindi / Post deleted' })
-  // ✅ DÜZELTME: Burada da 404/403 ayrımını Swagger'a işledik / Added 404/403 distinction to Swagger
-  @ApiResponse({ status: 404, description: 'Yazı bulunamadı / Post not found' })
-  @ApiResponse({ status: 403, description: 'Yetki hatası / Not authorized' })
+  @ApiResponse({ status: 200, description: 'Yazı başarıyla silindi / Post successfully deleted' })
   @UseGuards(JwtGuard, RolesGuard)
-  @Delete(':id')
   @Roles(Role.ADMIN, Role.AUTHOR)
-  delete(@GetUser('id') userId: number, @GetUser('role') userRole: string, @Param('id', ParseIntPipe) id: number) {
+  @Delete(':id')
+  deleteExistingPost(
+    @GetUser('id') userId: number,
+    @GetUser('role') userRole: string,
+    @Param('id', ParseIntPipe) id: number
+  ) {
     return this.blogService.deletePost(userId, userRole, id);
   }
 
-  @ApiOperation({ summary: 'Resim yükle / Upload image (max 2MB, jpg/png/gif)' })
+  /**
+   * Yazı için resim dosyası yükler (S3/MinIO entegrasyonu).
+   * Uploads an image file for a post (S3/MinIO integration).
+   * 📏 Limit: 2MB | 🖼️ Formats: jpg, png, gif
+   */
+  @ApiOperation({ summary: 'Görsel yükle / Upload image' })
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
   @ApiBody({
+    description: 'Yüklenecek resim dosyası / Image file to upload',
     schema: {
       type: 'object',
       properties: {
-        image: { type: 'string', format: 'binary', description: 'Resim dosyası / Image file' },
+        image: { type: 'string', format: 'binary' },
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Resim yüklendi — URL döner / Image uploaded — returns URL' })
-  @ApiResponse({ status: 400, description: 'Geçersiz dosya tipi veya boyut aşımı / Invalid file type or size exceeded' })
+  @ApiResponse({ status: 201, description: 'Görsel yüklendi ve URL döndürüldü / Image uploaded and URL returned' })
   @UseGuards(JwtGuard, RolesGuard)
   @Post('upload')
   @UseInterceptors(FileInterceptor('image'))
-  async uploadImage(
+  async uploadPostImage(
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB
-          new ImageValidator(), // Sadece jpg/png/gif izin ver
+          new MaxFileSizeValidator({ maxSize: 2 * 1024 * 1024 }), // 2MB Limit
+          new ImageValidator(), // Özel dosya tipi kontrolü / Custom file type validation
         ]
       })
     )
