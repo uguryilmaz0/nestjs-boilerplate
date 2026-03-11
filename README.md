@@ -5,7 +5,7 @@
 <h1 align="center">NestJS Boilerplate</h1>
 
 <p align="center">
-  <strong>Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, rate limiting, Helmet security, Winston structured logging, S3 file uploads, soft delete, full-text search, and Swagger documentation.</strong>
+  <strong>Production-ready NestJS REST API boilerplate with JWT authentication, RBAC, rate limiting, Helmet security, Winston structured logging, S3 file uploads, soft delete, full-text search, comprehensive testing, and Swagger documentation.</strong>
 </p>
 
 <p align="center">
@@ -14,11 +14,12 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" />
+  <img src="https://img.shields.io/badge/Jest-30.2-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest" />
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
-> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, hız sınırlama, Helmet güvenlik başlıkları, Winston yapılandırılmış loglama, S3 dosya yükleme, soft delete, tam metin arama ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
+> **TR:** JWT kimlik doğrulama, rol tabanlı erişim, hız sınırlama, Helmet güvenlik başlıkları, Winston yapılandırılmış loglama, S3 dosya yükleme, soft delete, tam metin arama, kapsamlı test altyapısı ve Swagger dokümantasyonu içeren üretime hazır NestJS REST API şablonu.
 
 ---
 
@@ -127,6 +128,7 @@ Client Request
 | Feature / Özellik | Description / Açıklama |
 |---------|-------------|
 | Authenticated Comments / Kimlik Doğrulamalı Yorumlar | JWT-protected comment creation / JWT korumalı yorum oluşturma |
+| Comment Deletion / Yorum Silme | Dual authorization: comment author OR post owner can delete / Çift yetkilendirme: yorum sahibi VEYA yazı sahibi silebilir |
 | Cascade Delete / Kademeli Silme | Comments auto-deleted when parent post is removed / Yazı silindiğinde yorumlar otomatik silinir |
 | Author Association / Yazar İlişkilendirme | Each comment linked to authenticated user / Her yorum kimliği doğrulanmış kullanıcıya bağlı |
 
@@ -152,6 +154,7 @@ Client Request
 | Soft Delete / Yumuşak Silme | `deletedAt` field on User, Post, Comment — records are never physically deleted / Kayıtlar asla fiziksel olarak silinmez |
 | Admin Ownership Override / Admin Sahiplik Geçersiz Kılma | Admins can update/delete any post regardless of ownership / Adminler sahiplik fark etmeksizin tüm yazıları yönetebilir |
 | Graceful Shutdown / Zarif Kapanma | Proper cleanup of database connections and resources on exit / Çıkışta veritabanı bağlantılarının düzgün kapatılması |
+| TypeScript Strict Mode / Katı Tip Güvenliği | `strict: true` — `noImplicitAny`, `strictNullChecks`, `noImplicitReturns` enabled / Tam tip güvenliği aktif |
 | Swagger Documentation / Swagger Dokümantasyonu | Interactive API docs at `/api/docs` (disabled in production) / `/api/docs` adresinde interaktif API belgeleri (üretimde devre dışı) |
 
 ---
@@ -171,8 +174,9 @@ Client Request
 | **File Upload** | Multer + AWS S3 SDK (S3 / MinIO / Supabase compatible) |
 | **Security** | Helmet, @nestjs/throttler |
 | **Logging** | Winston + nest-winston + winston-daily-rotate-file |
+| **Testing** | Jest 30 + ts-jest + supertest (34 unit + 9 E2E tests) |
 | **SEO** | slugify |
-| **Infrastructure** | Docker Compose (PostgreSQL + MinIO) |
+| **Infrastructure** | Docker Compose (PostgreSQL + MinIO + Test DB) |
 
 ---
 
@@ -256,8 +260,8 @@ src/
 │
 ├── comment/                         # 💬 Comment Module
 │   ├── comment.module.ts            # Module definition
-│   ├── comment.controller.ts        # Comment creation endpoint
-│   ├── comment.service.ts           # Comment business logic
+│   ├── comment.controller.ts        # Comment create & delete endpoints
+│   ├── comment.service.ts           # Comment business logic (dual auth delete)
 │   └── dto/
 │       └── create-comment.dto.ts    # Comment validation schema
 │
@@ -284,10 +288,17 @@ prisma/
 ├── schema.prisma                    # Database schema definition
 └── migrations/                      # Migration history
 
-docker-compose.yml                   # PostgreSQL + MinIO
+docker-compose.yml                   # PostgreSQL + MinIO + Test DB
+jest.config.ts                       # Unit test configuration (path aliases)
 logs/                                # Winston log output directory
   ├── error-YYYY-MM-DD.log           #   Error-level logs (14-day retention)
   └── combined-YYYY-MM-DD.log        #   All logs (30-day retention)
+test/
+  ├── app.e2e-spec.ts                # App health E2E test
+  ├── jest-e2e.json                  # E2E test configuration
+  ├── auth/auth.e2e-spec.ts          # Auth flow E2E tests
+  ├── blog/blog.e2e-spec.ts          # Blog CRUD E2E tests
+  └── utils/                         # Test helpers (setupTestApp, authHelper, storageHelper)
 ```
 
 ---
@@ -319,6 +330,7 @@ logs/                                # Winston log output directory
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | `POST` | `/comment` | 🔒 JWT | Add comment / Yorum ekle |
+| `DELETE` | `/comment/:id` | 🔒 JWT | Delete comment (author or post owner) / Yorum sil (yorum sahibi veya yazı sahibi) |
 
 ### Query Parameters / Sorgu Parametreleri (Blog Listing / Blog Listesi)
 
@@ -421,6 +433,7 @@ MinIO console is available at `http://localhost:9001` when using Docker Compose.
 | Service / Servis | Port | Description / Açıklama |
 |---------|------|-------------|
 | PostgreSQL 16 | `5432` | Database / Veritabanı |
+| PostgreSQL 16 (Test) | `5433` | Isolated test database (no volume persistence) / İzole test veritabanı (veri kalıcılığı yok) |
 | MinIO | `9000` / `9001` | S3-compatible storage / S3 uyumlu depolama |
 
 ```bash
@@ -470,6 +483,10 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 | **Production** | `npm run start:prod` | Run compiled application / Derlenmiş uygulamayı çalıştır |
 | **Lint** | `npm run lint` | Run ESLint with auto-fix / ESLint kod analizi |
 | **Format** | `npm run format` | Run Prettier on source files / Prettier biçimlendirme |
+| **Test** | `npm test` | Run unit tests / Unit testleri çalıştır |
+| **Test Watch** | `npm run test:watch` | Run tests in watch mode / Test'leri izleme modunda çalıştır |
+| **Test Coverage** | `npm run test:cov` | Run tests with coverage report / Kapsam raporu ile test çalıştır |
+| **Test E2E** | `npm run test:e2e` | Run E2E tests (requires Docker test DB) / E2E testleri çalıştır (Docker test DB gerektirir) |
 | **Release** | `npm run release` | Bump version (commit-and-tag-version) / Sürüm yükselt |
 | **Migrate** | `npx prisma migrate dev` | Apply pending migrations / Migration'ları uygula |
 | **Studio** | `npx prisma studio` | Open Prisma database browser / Veritabanı arayüzünü aç |
@@ -509,6 +526,11 @@ AWS_SECRET_ACCESS_KEY="your-secret-key"
 - [x] All imports use relative paths (no fragile `src/` absolute imports) / Tüm import'lar relative path kullanır
 - [x] `npm audit` 0 vulnerabilities — all dependency CVEs resolved via overrides (`ajv`, `minimatch`, `lodash`, `hono`, `tar`) / Tüm bağımlılık güvenlik açıkları override'lar ile giderildi
 - [x] Deprecated `standard-version` replaced with maintained `commit-and-tag-version` / Kullanımdan kaldırılan paket aktif fork ile değiştirildi
+- [x] TypeScript `strict: true` — `noImplicitAny`, `strictNullChecks`, `noImplicitReturns` enabled / TypeScript katı mod aktif
+- [x] Explicit `JWT_SECRET` null check before JWT strategy initialization / JWT stratejisi başlatılmadan önce açık null kontrolü
+- [x] Dual authorization on comment deletion (comment author OR post owner) / Yorum silmede çift yetkilendirme (yorum sahibi VEYA yazı sahibi)
+- [x] Isolated test database via Docker (port 5433, no data persistence) / Docker ile izole test veritabanı
+- [x] 34 unit tests + 9 E2E tests — Auth, Blog, Comment, Prisma modules covered / 34 unit + 9 E2E test
 - [ ] HTTPS enforcement (required for production / üretim için gerekli)
 
 ### API Response Formats / API Yanıt Formatları
