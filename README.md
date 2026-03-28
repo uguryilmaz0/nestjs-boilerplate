@@ -10,11 +10,11 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/NestJS-11.1-E0234E?style=for-the-badge&logo=nestjs" alt="NestJS" />
-  <img src="https://img.shields.io/badge/Prisma-7.3-2D3748?style=for-the-badge&logo=prisma" alt="Prisma" />
+  <img src="https://img.shields.io/badge/Prisma-7.6-2D3748?style=for-the-badge&logo=prisma" alt="Prisma" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
-  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Swagger-OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black" alt="Swagger" />
-  <img src="https://img.shields.io/badge/Jest-30.2-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest" />
+  <img src="https://img.shields.io/badge/Jest-30.3-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest" />
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
@@ -165,8 +165,8 @@ Client Request
 |-------|-----------|
 | **Runtime** | Node.js 18+ |
 | **Framework** | NestJS 11.1 |
-| **Language** | TypeScript 5.7 |
-| **ORM** | Prisma 7.3 with PostgreSQL adapter (`@prisma/adapter-pg`) |
+| **Language** | TypeScript 5.9 |
+| **ORM** | Prisma 7.6 with PostgreSQL adapter (`@prisma/adapter-pg`) |
 | **Database** | PostgreSQL 16 |
 | **Auth** | Passport.js + JWT (`@nestjs/passport`, `@nestjs/jwt`) |
 | **Validation** | class-validator + class-transformer |
@@ -174,7 +174,7 @@ Client Request
 | **File Upload** | Multer + AWS S3 SDK (S3 / MinIO / Supabase compatible) |
 | **Security** | Helmet, @nestjs/throttler |
 | **Logging** | Winston + nest-winston + winston-daily-rotate-file |
-| **Testing** | Jest 30 + ts-jest + supertest (34 unit + 9 E2E tests) |
+| **Testing** | Jest 30.3 + ts-jest + supertest (34 unit + 9 E2E tests) |
 | **SEO** | slugify |
 | **Infrastructure** | Docker Compose (PostgreSQL + MinIO + Test DB) |
 
@@ -212,7 +212,10 @@ docker-compose up -d
 # 5. Run database migrations / Migration'ları çalıştır
 npx prisma migrate dev
 
-# 6. Start the development server / Geliştirme sunucusunu başlat
+# 6. Generate prisma service / Prisma servisi oluştururyoruz
+npx prisma generate
+
+# 7. Start the development server / Geliştirme sunucusunu başlat
 npm run start:dev
 ```
 
