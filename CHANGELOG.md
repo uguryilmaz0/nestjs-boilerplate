@@ -2,6 +2,126 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.5.1](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.5.0...v1.5.1) (2026-03-28)
+
+## [1.5.1](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.5.0...v1.5.1) (2026-03-28)
+
+## [1.5.1](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.5.0...v1.5.1) (2026-03-28)
+
+### Changed / Değişenler
+- **`@nestjs/common`** `11.1.12` → `11.1.17` — latest NestJS core patches
+  NestJS core güncellendi
+- **`@nestjs/core`** `11.1.12` → `11.1.17` — kept in sync with common
+  Common ile senkron tutuldu
+- **`@nestjs/config`** `4.0.2` → `4.0.3` — bugfix release
+  Hata düzeltme güncellemesi
+- **`@nestjs/platform-express`** `11.1.12` → `11.1.17` — kept in sync with core
+  Core ile senkron tutuldu
+- **`@nestjs/testing`** `^11.1.14` → `^11.1.17` — kept in sync with core
+  Core ile senkron tutuldu
+- **`@prisma/adapter-pg`** `^7.3.0` → `^7.6.0` — Prisma ORM upgrade
+  Prisma ORM güncellemesi
+- **`@prisma/client`** `^7.3.0` → `^7.6.0` — kept in sync with adapter-pg
+  Adapter-pg ile senkron tutuldu
+- **`prisma` (CLI)** `^7.3.0` → `^7.6.0` — kept in sync with client
+  Client ile senkron tutuldu
+- **`@aws-sdk/client-s3`** `^3.995.0` → `^3.1019.0` — latest S3 SDK patches
+  En son S3 SDK yamaları
+- **`@aws-sdk/lib-storage`** `^3.995.0` → `^3.1019.0` — kept in sync with client-s3
+  Client-s3 ile senkron tutuldu
+- **`typescript`** `5.7.3` → `5.9.3` — **TypeScript 5.9** with improved inference and performance
+  TypeScript 5.9 — geliştirilmiş tip çıkarımı ve performans
+- **`jest`** `^30.2.0` → `^30.3.0` — latest Jest patches
+  En son Jest yamaları
+- **`class-validator`** `0.14.3` → `0.15.1` — validation improvements
+  Doğrulama iyileştirmeleri
+- **`pg`** `8.18.0` → `8.20.0` — PostgreSQL driver security and performance patches
+  PostgreSQL driver güvenlik ve performans yamaları
+- **`rxjs`** `7.8.1` → `7.8.2` — bugfix release
+  Hata düzeltme güncellemesi
+- **`slugify`** `^1.6.6` → `^1.6.8` — bugfix release
+  Hata düzeltme güncellemesi
+- **`commit-and-tag-version`** `^12.6.1` → `^12.7.1` — bugfix release
+  Hata düzeltme güncellemesi
+- **`@types/multer`** `^2.0.0` → `^2.1.0` — type definition update
+  Tip tanımı güncellemesi
+- **`@types/pg`** `^8.16.0` → `^8.20.0` — kept in sync with pg driver
+  pg driver ile senkron tutuldu
+- **`@types/supertest`** `^6.0.3` → `^7.2.0` — major type definition update
+  Major tip tanımı güncellemesi
+- **Test scripts** updated to use `node --experimental-vm-modules` for ESM support
+  Test script'leri ESM desteği için güncellendi
+
+### Added / Eklenenler
+- **`@types/babel__core`** `^7.20.5` — babel type definitions for TypeScript 5.9 compatibility
+  TypeScript 5.9 uyumluluğu için babel tip tanımları eklendi
+- **`tsconfig.json` → `types`** field — explicit type resolution for `node`, `jest`, `babel__core`
+  Tip çözümleme optimizasyonu için `types` alanı eklendi
+
+### Security / Güvenlik
+- **8 new security overrides** added to resolve transitive dependency vulnerabilities
+  8 yeni güvenlik override'ı eklendi — geçişken bağımlılık zafiyetleri giderildi
+- **`fast-xml-parser`** override → `5.5.7` — CVE fix
+  CVE düzeltmesi
+- **`path-to-regexp`** override → `^8.3.1` — ReDoS vulnerability fix
+  ReDoS zafiyeti düzeltmesi
+- **`picomatch`** override → `^4.0.4` — security patch
+  Güvenlik yaması
+- **`handlebars`** override → `^4.7.9` — prototype pollution fix
+  Prototype pollution düzeltmesi
+- **`brace-expansion`** override → `^5.0.5` — ReDoS fix
+  ReDoS düzeltmesi
+- **`yaml`** override → `^2.8.3` — security patch
+  Güvenlik yaması
+- **`effect`** override → `^3.20.0` — security patch
+  Güvenlik yaması
+- **`@hono/node-server`** override → `1.19.10` — security patch
+  Güvenlik yaması
+- **`hono`** override `^4.11.7` → `^4.12.8` — security update
+  Güvenlik güncellemesi
+- **`class-validator`** override → `0.15.1` — version consistency across dependency tree
+  Bağımlılık ağacında sürüm tutarlılığı
+
+---
+
+## [1.5.0](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.4.3...v1.5.0) (2026-03-12)
+
+### Added / Eklenenler
+- **34 Unit Tests** (7 suites) — AuthService, AuthController, BlogService, BlogController, CommentService, CommentController, PrismaService
+  34 unit test eklendi — Auth, Blog, Comment, Prisma modülleri kapsandı
+- **9 E2E Tests** (3 suites) — App health check, Auth flow, Blog CRUD with real DB + MinIO
+  9 E2E test eklendi — gerçek veritabanı ve MinIO ile tam entegrasyon
+- **Jest 30 + ts-jest + supertest** — modern test framework stack
+  Modern test framework altyapısı kuruldu
+- **`jest.config.ts`** — unit test configuration with path aliases and coverage settings
+  Path alias desteği ve kapsam ayarlarıyla unit test konfigürasyonu
+- **`test/jest-e2e.json`** — separate E2E test configuration
+  Ayrı E2E test konfigürasyonu
+- **Docker `postgres-test`** — isolated test database on port 5433 (no data persistence)
+  Port 5433'te izole test veritabanı (veri kalıcılığı yok)
+- **`dotenv-cli`** + `.env.test` — isolated test environment management
+  İzole test ortamı yönetimi
+- **Test utilities** — `setupTestApp`, `getAccessToken`, `ensureBucketExists` helpers
+  Tekrar kullanılabilir test yardımcıları eklendi
+- **`CommentService.removeComment()`** — dual authorization model: comment author OR post owner can delete
+  Çift yetkilendirme modeli: yorum sahibi VEYA yazı sahibi silebilir
+- **`BlogService.getPostAndValidateAccess()`** — DRY helper for update + delete authorization (owner or ADMIN)
+  DRY yetki kontrolü helper'ı: güncelleme + silme için sahip veya ADMIN kontrolü
+
+### Changed / Değişenler
+- **TypeScript `strict: true`** — full strict type-checking enabled (`noImplicitAny`, `strictNullChecks`, `noImplicitReturns`, `noFallthroughCasesInSwitch`)
+  Tam katı tip kontrolü etkinleştirildi (Sprint 4'ten öne çekildi)
+- **`strictPropertyInitialization: false`** — kept disabled for NestJS DTO/Entity decorator compatibility
+  NestJS DTO/Entity dekoratör uyumluluğu için devre dışı tutuldu
+- **`JwtStrategy`** — explicit `JWT_SECRET` null check before `super()` call
+  `super()` çağrısından önce açık JWT_SECRET null kontrolü eklendi
+- **Test scripts** added to `package.json`: `test`, `test:watch`, `test:cov`, `test:e2e`
+  Test script'leri eklendi
+- **Swagger version** updated to `1.5.0`
+  Swagger versiyonu `1.5.0` olarak güncellendi
+
+---
+
 ## [1.4.3](https://github.com/uguryilmaz0/nestjs-boilerplate/compare/v1.4.2...v1.4.3) (2026-02-20)
 
 
