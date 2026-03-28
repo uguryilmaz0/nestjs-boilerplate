@@ -26,6 +26,11 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noUnusedLocals": false, // Geliştirme aşamasında false kalabilir
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "types": [
+      "node",
+      "jest",
+      "babel__core"
+    ],
   }
 }
